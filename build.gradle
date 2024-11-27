@@ -22,6 +22,10 @@ java {
 
 checkstyle {
     configDirectory = file("$rootProject.projectDir/checkstyle")
+    configProperties = [
+            "org.checkstyle.google.suppressionfilter.config":
+                    "$rootProject.projectDir/checkstyle/checkstyle-suppressions.xml",
+    ]
 }
 
 repositories {
