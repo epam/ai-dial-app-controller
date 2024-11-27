@@ -1,0 +1,70 @@
+package com.epam.aidial.kubernetes.knative;
+
+import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.openapi.models.V1Affinity;
+import io.kubernetes.client.openapi.models.V1Container;
+import io.kubernetes.client.openapi.models.V1EphemeralContainer;
+import io.kubernetes.client.openapi.models.V1HostAlias;
+import io.kubernetes.client.openapi.models.V1LocalObjectReference;
+import io.kubernetes.client.openapi.models.V1PodDNSConfig;
+import io.kubernetes.client.openapi.models.V1PodOS;
+import io.kubernetes.client.openapi.models.V1PodReadinessGate;
+import io.kubernetes.client.openapi.models.V1PodResourceClaim;
+import io.kubernetes.client.openapi.models.V1PodSchedulingGate;
+import io.kubernetes.client.openapi.models.V1PodSecurityContext;
+import io.kubernetes.client.openapi.models.V1Toleration;
+import io.kubernetes.client.openapi.models.V1TopologySpreadConstraint;
+import io.kubernetes.client.openapi.models.V1Volume;
+import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Data
+public class V1RevisionSpec {
+    Long activeDeadlineSeconds;
+    V1Affinity affinity;
+    Boolean automountServiceAccountToken;
+    List<V1Container> containers = new ArrayList<>();
+    V1PodDNSConfig dnsConfig;
+    String dnsPolicy;
+    Boolean enableServiceLinks;
+    List<V1EphemeralContainer> ephemeralContainers;
+    List<V1HostAlias> hostAliases;
+    Boolean hostIPC;
+    Boolean hostNetwork;
+    Boolean hostPID;
+    Boolean hostUsers;
+    String hostname;
+    List<V1LocalObjectReference> imagePullSecrets;
+    List<V1Container> initContainers;
+    String nodeName;
+    Map<String, String> nodeSelector = new HashMap<>();
+    V1PodOS os;
+    Map<String, Quantity> overhead = new HashMap<>();
+    String preemptionPolicy;
+    Integer priority;
+    String priorityClassName;
+    List<V1PodReadinessGate> readinessGates;
+    List<V1PodResourceClaim> resourceClaims;
+    String restartPolicy;
+    String runtimeClassName;
+    String schedulerName;
+    List<V1PodSchedulingGate> schedulingGates;
+    V1PodSecurityContext securityContext;
+    String serviceAccount;
+    String serviceAccountName;
+    Boolean setHostnameAsFQDN;
+    Boolean shareProcessNamespace;
+    String subdomain;
+    Long terminationGracePeriodSeconds;
+    List<V1Toleration> tolerations;
+    List<V1TopologySpreadConstraint> topologySpreadConstraints;
+    List<V1Volume> volumes;
+    Long containerConcurrency;
+    Long timeoutSeconds;
+    Long responseStartTimeoutSeconds;
+    Long idleTimeoutSeconds;
+}

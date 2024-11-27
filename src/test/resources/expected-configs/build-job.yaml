@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: app-ctrl-build-test-name
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - args:
+            - --context=/sources
+            - --dockerfile=/templates/python-pip/Dockerfile
+            - --destination=test-image-name
+            - --build-arg=PYTHON_IMAGE=python:3.11-slim
+          image: test-builder-image
+          name: builder
+          volumeMounts:
+            - mountPath: /sources
+              name: volume
+              readOnly: true
+              subPath: sources
+            - mountPath: /templates
+              name: volume
+              readOnly: true
+              subPath: templates
+      initContainers:
+        - env:
+            - name: DIAL_BASE_URL
+              value: test-dial-base-url
+            - name: ALLOWED_PACKAGES
+              value: "aidial-sdk\nanthropic\nbeautifulsoup4\nchromadb\ncolorama\nfastapi\n\
+            faiss-cpu\nflake8\nflask\ninquirer\nlangchain\nlangchain-community\nlangchain-openai\n\
+            langchain-text-splitters\nnumpy\nopenai\npandas\npyright\npython-dotenv\n\
+            python-multipart\nprompt-toolkit\npypdf\nrequests\ntiktoken\nuvicorn\n\
+            \ "
+            - name: SOURCES
+              value: test-sources
+          envFrom:
+            - secretRef:
+                name: app-ctrl-dial-auth-test-name
+          image: test-puller-image
+          imagePullPolicy: Always
+          name: puller
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 1001
+            runAsNonRoot: true
+          volumeMounts:
+            - mountPath: /sources
+              name: volume
+              subPath: sources
+            - mountPath: /templates
+              name: volume
+              subPath: templates
+      restartPolicy: Never
+      serviceAccountName: builder
+      volumes:
+        - emptyDir:
+            sizeLimit: 10Mi
+          name: volume

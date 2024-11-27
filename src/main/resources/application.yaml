@@ -1,0 +1,125 @@
+logging:
+  level:
+    # Stop log spamming:
+    # https://github.com/kubernetes-client/java/issues/2741
+    org.yaml.snakeyaml.introspector: ERROR
+
+app:
+  build-namespace: build-namespace
+  deploy-namespace: deploy-namespace
+  docker-registry: docker.registry
+  docker-registry-protocol: https
+  puller-image: ${app.docker-registry}/builder:latest
+  builder-image: gcr.io/kaniko-project/executor:latest
+  dial-base-url: https://dial.core
+  image-name-format: app-%s
+  image-label: latest
+  image-build-timeout-sec: 300
+  service-setup-timeout-sec: 300
+  heartbeat-period-sec: 30
+  max-error-log-lines: 20
+  max-error-log-chars: 1000
+  puller-container: puller
+  builder-container: builder
+  service-container: app-container
+  allowed-python-packages: |
+    aidial-sdk
+    anthropic
+    beautifulsoup4
+    chromadb
+    colorama
+    fastapi
+    faiss-cpu
+    flake8
+    flask
+    inquirer
+    langchain
+    langchain-community
+    langchain-openai
+    langchain-text-splitters
+    numpy
+    openai
+    pandas
+    pyright
+    python-dotenv
+    python-multipart
+    prompt-toolkit
+    pypdf
+    requests
+    tiktoken
+    uvicorn
+  additional-allowed-python-packages: ""
+  default-runtime: python3.11
+  runtimes:
+    "python3.8": python:3.8-slim
+    "python3.9": python:3.9-slim
+    "python3.10": python:3.10-slim
+    "python3.11": python:3.11-slim
+    "python3.12": python:3.12-slim
+  service-config:
+    apiVersion: serving.knative.dev/v1
+    kind: Service
+    spec:
+      template:
+        metadata:
+          annotations:
+            "[autoscaling.knative.dev/initial-scale]": 0
+        spec:
+          containers:
+            - name: ${app.service-container}
+              imagePullPolicy: Always
+  job-config:
+    apiVersion: batch/v1
+    kind: Job
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          serviceAccountName: builder
+          initContainers:
+            - name: ${app.puller-container}
+              image: ${app.puller-image}
+              imagePullPolicy: Always
+              env:
+                - name: DIAL_BASE_URL
+                  value: ${app.dial-base-url}
+                - name: ALLOWED_PACKAGES
+                  value: "${app.allowed-python-packages} ${app.additional-allowed-python-packages}"
+              volumeMounts:
+                - name: volume
+                  subPath: sources
+                  mountPath: /sources
+                - name: volume
+                  subPath: templates
+                  mountPath: /templates
+              securityContext:
+                runAsUser: 1001
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+          containers:
+            - name: ${app.builder-container}
+              image: ${app.builder-image}
+              args:
+                - "--context=/sources"
+              volumeMounts:
+                - name: volume
+                  subPath: sources
+                  mountPath: /sources
+                  readOnly: true
+                - name: volume
+                  subPath: templates
+                  mountPath: /templates
+                  readOnly: true
+          restartPolicy: Never
+          volumes:
+            - name: volume
+              emptyDir:
+                sizeLimit: 10Mi
+  secret-config:
+    apiVersion: v1
+    kind: Secret
+
+spring:
+  mvc:
+    async:
+      request-timeout: 600000 # 10 min
