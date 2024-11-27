@@ -75,6 +75,7 @@ app:
           annotations:
             "[autoscaling.knative.dev/initial-scale]": 0
         spec:
+          automountServiceAccountToken: false
           containers:
             - name: ${app.service-container}
               imagePullPolicy: Always
@@ -86,6 +87,7 @@ app:
       template:
         spec:
           serviceAccountName: builder
+          automountServiceAccountToken: false
           initContainers:
             - name: ${app.puller-container}
               image: ${app.puller-image}

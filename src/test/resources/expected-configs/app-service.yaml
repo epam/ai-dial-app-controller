@@ -8,6 +8,7 @@ spec:
       annotations:
         autoscaling.knative.dev/initial-scale: '0'
     spec:
+      automountServiceAccountToken: false
       containers:
         - env:
             - name: test-env-name

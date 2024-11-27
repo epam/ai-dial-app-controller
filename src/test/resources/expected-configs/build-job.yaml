@@ -6,6 +6,7 @@ spec:
   backoffLimit: 0
   template:
     spec:
+      automountServiceAccountToken: false
       containers:
         - args:
             - --context=/sources
