@@ -4,6 +4,7 @@ import com.epam.aidial.kubernetes.knative.V1Service;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.util.Yaml;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,15 +18,18 @@ public class AppConfiguration {
     @Getter
     private V1Secret secretConfig;
     private String secretConfigString;
+
     @Getter
     private V1Job jobConfig;
     private String jobConfigString;
+
     @Getter
     private V1Service serviceConfig;
     private String serviceConfigString;
+
     @Getter
     @Setter
-    private Map<String, String> runtimes;
+    private Map<String, RuntimeConfiguration> runtimes;
 
     public void setSecretConfig(V1Secret secretConfig) {
         this.secretConfig = secretConfig;
@@ -52,5 +56,11 @@ public class AppConfiguration {
 
     public V1Service cloneServiceConfig() {
         return Yaml.loadAs(serviceConfigString, V1Service.class);
+    }
+
+    @Data
+    public static class RuntimeConfiguration {
+        private String image;
+        private String profile;
     }
 }

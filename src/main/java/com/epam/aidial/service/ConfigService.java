@@ -78,7 +78,6 @@ public class ConfigService {
 
     public V1Job buildJobConfig(String name, String sources, String runtime) {
         String targetImage = registryService.fullImageName(name);
-        String targetImageTemplate = "python-pip"; // TODO: make it configurable
         log.info("Target image: {}", targetImage);
 
         MappingChain<V1Job> config = new MappingChain<>(this.appConfiguration.cloneJobConfig());
@@ -95,8 +94,8 @@ public class ConfigService {
                 .get("SOURCES")
                 .data()
                 .setValue(sources);
-        String pythonImage = appConfiguration.getRuntimes().get(runtime);
-        if (pythonImage == null) {
+        AppConfiguration.RuntimeConfiguration runtimeConfig = appConfiguration.getRuntimes().get(runtime);
+        if (runtimeConfig == null) {
             throw new IllegalArgumentException(
                     "Unsupported runtime: %s. Supported: %s".formatted(runtime, appConfiguration.getRuntimes().keySet()));
         }
@@ -109,9 +108,9 @@ public class ConfigService {
                 .get(CONTAINER_ARGS_FIELD)
                 .data()
                 .addAll(List.of(
-                        "--dockerfile=/templates/%s/Dockerfile".formatted(targetImageTemplate),
+                        "--dockerfile=/templates/%s/Dockerfile".formatted(runtimeConfig.getProfile()),
                         "--destination=%s".formatted(targetImage),
-                        "--build-arg=PYTHON_IMAGE=%s".formatted(pythonImage)));
+                        "--build-arg=PYTHON_IMAGE=%s".formatted(runtimeConfig.getImage())));
 
         return config.data();
     }
