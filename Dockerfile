@@ -14,7 +14,7 @@ COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 RUN gradle --no-daemon build --stacktrace -PdisableCompression=true -x test
 
-RUN mkdir /build && tar -xf /home/gradle/src/build/distributions/__RENAMEMEPLEASE__*.tar --strip-components=1 -C /build
+RUN mkdir /build && tar -xf /home/gradle/src/build/distributions/ai-dial-app-controller*.tar --strip-components=1 -C /build
 
 FROM eclipse-temurin:17-jdk-alpine
 
@@ -36,4 +36,4 @@ HEALTHCHECK --start-period=30s --interval=1m --timeout=3s \
 
 EXPOSE 8080 9464
 
-ENTRYPOINT ["/app/bin/__RENAMEMEPLEASE__"]
+ENTRYPOINT ["/app/bin/ai-dial-app-controller"]
