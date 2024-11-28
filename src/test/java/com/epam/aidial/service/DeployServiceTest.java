@@ -9,9 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -40,13 +40,13 @@ class DeployServiceTest {
     @Autowired
     private DeployService deployService;
 
-    @MockBean
+    @MockitoBean
     private KubernetesClient kubernetesClient;
 
-    @MockBean
+    @MockitoBean
     private KubernetesService kubernetesService;
 
-    @MockBean
+    @MockitoBean
     private ConfigService templateService;
 
     @Captor

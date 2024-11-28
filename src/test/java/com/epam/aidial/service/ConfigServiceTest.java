@@ -10,8 +10,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +29,7 @@ class ConfigServiceTest {
     @Autowired
     private ConfigService configService;
 
-    @MockBean
+    @MockitoBean
     private RegistryService registryService;
 
     @Captor
