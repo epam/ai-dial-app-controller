@@ -12,12 +12,12 @@ import java.io.IOException;
 @Configuration
 public class WebFluxConfig {
     @Bean
-    public ApiClient buildKubeClient(@Value("${build-kube-config:#{null}}") String configPath) throws IOException {
+    public ApiClient buildKubeClient(@Value("${app.build-kube-config:#{null}}") String configPath) throws IOException {
         return KubernetesUtils.createClient(configPath);
     }
 
     @Bean
-    public ApiClient deployKubeClient(@Value("${deploy-kube-config:#{null}}") String configPath) throws IOException {
+    public ApiClient deployKubeClient(@Value("${app.deploy-kube-config:#{null}}") String configPath) throws IOException {
         return KubernetesUtils.createClient(configPath);
     }
 
