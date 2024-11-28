@@ -8,3 +8,5 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@1.10.0
     secrets: inherit
+    with:
+      ort_version: 34.0.0
