@@ -44,6 +44,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.0'
     testImplementation 'io.projectreactor:reactor-test:3.6.10'
     testImplementation 'org.assertj:assertj-core:3.26.3'
+
+    // Security fix:
+    implementation 'io.netty:netty-common:4.1.115.Final' // CVE-2024-47535
 }
 
 application {
