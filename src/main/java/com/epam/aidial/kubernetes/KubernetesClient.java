@@ -90,33 +90,33 @@ public class KubernetesClient {
     public Mono<Void> createJob(String namespace, V1Job job, int imageBuildTimeoutSec) {
         // Currently there is no asynchronous Watch api
         return Mono.<Void>fromCallable(() -> {
-                    String name = job.getMetadata().getName();
+            String name = job.getMetadata().getName();
 
-                    BatchV1Api batchApi = new BatchV1Api(apiClient);
-                    Call call = batchApi.listNamespacedJob(namespace)
-                            .watch(true)
-                            .timeoutSeconds(imageBuildTimeoutSec)
-                            .buildCall(null);
+            BatchV1Api batchApi = new BatchV1Api(apiClient);
+            Call call = batchApi.listNamespacedJob(namespace)
+                    .watch(true)
+                    .timeoutSeconds(imageBuildTimeoutSec)
+                    .buildCall(null);
 
-                    try (Watch<V1Job> watch = Watch.createWatch(batchApi.getApiClient(), call, JOB_TYPE_TOKEN.getType())) {
-                        log.info("Creating a job {}", name);
-                        batchApi.createNamespacedJob(namespace, job)
-                                .execute();
+            try (Watch<V1Job> watch = Watch.createWatch(batchApi.getApiClient(), call, JOB_TYPE_TOKEN.getType())) {
+                log.info("Creating a job {}", name);
+                batchApi.createNamespacedJob(namespace, job)
+                        .execute();
 
-                        log.info("Waiting for job {} to complete", name);
-                        for (Watch.Response<V1Job> item : watch) {
-                            V1Job jobState = item.object;
-                            if (jobState != null && name.equals(jobState.getMetadata().getName())
-                                    && KubernetesUtils.extractJobCompletionStatus(jobState)) {
-                                log.info("Job {} has completed successfully", name);
-                                return null;
-                            }
-                        }
+                log.info("Waiting for job {} to complete", name);
+                for (Watch.Response<V1Job> item : watch) {
+                    V1Job jobState = item.object;
+                    if (jobState != null && name.equals(jobState.getMetadata().getName())
+                            && KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                        log.info("Job {} has completed successfully", name);
+                        return null;
                     }
+                }
+            }
 
-                    throw new IllegalStateException("Subscription to job %s events expired".formatted(name));
-                })
-                .subscribeOn(Schedulers.boundedElastic());
+            throw new IllegalStateException("Subscription to job %s events expired".formatted(name));
+        })
+        .subscribeOn(Schedulers.boundedElastic());
     }
 
     public Mono<V1PodList> getJobPods(String namespace, String name) {
@@ -205,35 +205,35 @@ public class KubernetesClient {
     public Mono<String> createKnativeService(String namespace, V1Service service, int serviceSetupTimeoutSec) {
         // Currently there is no asynchronous Watch api
         return Mono.fromCallable(() -> {
-                    String name = service.getMetadata().getName();
-                    ServiceVersion version = ServiceVersion.parse(service.getApiVersion());
+            String name = service.getMetadata().getName();
+            ServiceVersion version = ServiceVersion.parse(service.getApiVersion());
 
-                    CustomObjectsApi customObjectsApi = new CustomObjectsApi(apiClient);
-                    Call call = customObjectsApi.listNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES)
-                            .watch(true)
-                            .timeoutSeconds(serviceSetupTimeoutSec)
-                            .buildCall(null);
-                    try (Watch<V1Service> watch = Watch.createWatch(
-                            customObjectsApi.getApiClient(), call, SERVICE_TYPE_TOKEN.getType())) {
-                        log.info("Creating a service {}", name);
-                        customObjectsApi.createNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, service)
-                                .execute();
+            CustomObjectsApi customObjectsApi = new CustomObjectsApi(apiClient);
+            Call call = customObjectsApi.listNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES)
+                    .watch(true)
+                    .timeoutSeconds(serviceSetupTimeoutSec)
+                    .buildCall(null);
+            try (Watch<V1Service> watch = Watch.createWatch(
+                    customObjectsApi.getApiClient(), call, SERVICE_TYPE_TOKEN.getType())) {
+                log.info("Creating a service {}", name);
+                customObjectsApi.createNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, service)
+                        .execute();
 
-                        for (Watch.Response<V1Service> item : watch) {
-                            V1Service serviceState = item.object;
-                            if (serviceState != null && name.equals(serviceState.getMetadata().getName())) {
-                                String url = KubernetesUtils.extractServiceUrl(serviceState);
-                                if (url != null) {
-                                    log.info("Service {} has been set up", name);
-                                    return url;
-                                }
-                            }
+                for (Watch.Response<V1Service> item : watch) {
+                    V1Service serviceState = item.object;
+                    if (serviceState != null && name.equals(serviceState.getMetadata().getName())) {
+                        String url = KubernetesUtils.extractServiceUrl(serviceState);
+                        if (url != null) {
+                            log.info("Service {} has been set up", name);
+                            return url;
                         }
                     }
+                }
+            }
 
-                    throw new IllegalStateException("Subscription to service %s events expired".formatted(name));
-                })
-                .subscribeOn(Schedulers.boundedElastic());
+            throw new IllegalStateException("Subscription to service %s events expired".formatted(name));
+        })
+        .subscribeOn(Schedulers.boundedElastic());
     }
 
     public Mono<Void> deleteKnativeService(String namespace, String name, String serviceVersion) {
