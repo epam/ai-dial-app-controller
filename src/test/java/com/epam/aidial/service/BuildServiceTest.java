@@ -1,5 +1,6 @@
 package com.epam.aidial.service;
 
+import com.epam.aidial.kubernetes.KubernetesClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -16,10 +17,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -27,7 +28,8 @@ import static org.mockito.Mockito.when;
         "app.build-namespace=" + BuildServiceTest.TEST_NAMESPACE,
         "app.docker-registry=" + BuildServiceTest.TEST_REGISTRY,
         "app.max-error-log-lines=5",
-        "app.max-error-log-chars=15"
+        "app.max-error-log-chars=15",
+        "app.image-build-timeout-sec=5"
 })
 @Import(BuildService.class)
 class BuildServiceTest {
@@ -46,6 +48,9 @@ class BuildServiceTest {
 
     @Autowired
     private BuildService buildService;
+
+    @MockBean
+    private KubernetesClient kubernetesClient;
 
     @MockBean
     private KubernetesService kubernetesService;
@@ -84,14 +89,15 @@ class BuildServiceTest {
     private ArgumentCaptor<String> deleteManifestCaptor;
 
     @Test
-    void testBuild() throws IOException {
+    void testBuild() {
         // Arrange
+        when(kubernetesService.buildClient()).thenReturn(kubernetesClient);
         when(templateService.dialAuthSecretConfig(
                 secretConfigCaptor.capture(),
                 secretConfigCaptor.capture(),
                 secretConfigCaptor.capture()))
                 .thenReturn(TEST_SECRET);
-        when(kubernetesService.createSecret(
+        when(kubernetesClient.createSecret(
                 (String) createSecretCaptor.capture(),
                 (V1Secret) createSecretCaptor.capture()))
                 .thenReturn(Mono.empty());
@@ -100,9 +106,10 @@ class BuildServiceTest {
                 jobConfigCaptor.capture(),
                 jobConfigCaptor.capture()))
                 .thenReturn(TEST_JOB);
-        when(kubernetesService.createJob(
+        when(kubernetesClient.createJob(
                 (String) createJobCaptor.capture(),
-                (V1Job) createJobCaptor.capture()))
+                (V1Job) createJobCaptor.capture(),
+                anyInt()))
                 .thenReturn(Mono.empty());
         when(registryService.fullImageName(
                 fullImageNameCaptor.capture()))
@@ -134,11 +141,12 @@ class BuildServiceTest {
     @Test
     void testClean() {
         // Arrange
-        when(kubernetesService.deleteJob(
+        when(kubernetesService.buildClient()).thenReturn(kubernetesClient);
+        when(kubernetesClient.deleteJob(
                 deleteJobCaptor.capture(),
                 deleteJobCaptor.capture()))
                 .thenReturn(Mono.empty());
-        when(kubernetesService.deleteSecret(
+        when(kubernetesClient.deleteSecret(
                 deleteSecretCaptor.capture(),
                 deleteSecretCaptor.capture()))
                 .thenReturn(Mono.empty());
@@ -171,11 +179,12 @@ class BuildServiceTest {
     @Test
     void testCleanReturnsFalse() {
         // Arrange
-        when(kubernetesService.deleteJob(
+        when(kubernetesService.buildClient()).thenReturn(kubernetesClient);
+        when(kubernetesClient.deleteJob(
                 deleteJobCaptor.capture(),
                 deleteJobCaptor.capture()))
                 .thenReturn(Mono.error(new ApiException(404, "Not found")));
-        when(kubernetesService.deleteSecret(
+        when(kubernetesClient.deleteSecret(
                 deleteSecretCaptor.capture(),
                 deleteSecretCaptor.capture()))
                 .thenReturn(Mono.error(new ApiException(404, "Not found")));

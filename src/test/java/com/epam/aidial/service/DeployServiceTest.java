@@ -1,5 +1,6 @@
 package com.epam.aidial.service;
 
+import com.epam.aidial.kubernetes.KubernetesClient;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -15,27 +16,32 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = {
-        "app.deploy-namespace=" + DeployServiceTest.TEST_NAMESPACE
+        "app.deploy-namespace=" + DeployServiceTest.TEST_NAMESPACE,
+        "app.service-setup-timeout-sec=5"
 })
 @Import(DeployService.class)
 class DeployServiceTest {
     private static final Map<String, String> TEST_ENV = Map.of("test-env-name", "test-env-value");
     private static final String TEST_NAME = "test-name";
     private static final String TEST_URL = "url";
+    private static final String TEST_SERVICE_VERSION = "test-service-version";
 
     static final String TEST_NAMESPACE = "test-namespace";
 
     @Autowired
     private DeployService deployService;
+
+    @MockBean
+    private KubernetesClient kubernetesClient;
 
     @MockBean
     private KubernetesService kubernetesService;
@@ -54,17 +60,19 @@ class DeployServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testDeploy() throws IOException {
+    void testDeploy() {
         // Arrange
         V1Service testService = new V1Service();
         testService.setMetadata(new V1ObjectMeta().name(TEST_NAME));
+        when(kubernetesService.deployClient()).thenReturn(kubernetesClient);
         when(templateService.appServiceConfig(
                 (String) appServiceConfigCaptor.capture(),
                 (Map<String, String>) appServiceConfigCaptor.capture()))
                 .thenReturn(testService);
-        when(kubernetesService.createKnativeService(
+        when(kubernetesClient.createKnativeService(
                 (String) createServiceCaptor.capture(),
-                (V1Service) createServiceCaptor.capture()))
+                (V1Service) createServiceCaptor.capture(),
+                anyInt()))
                 .thenReturn(Mono.just(TEST_URL));
 
         // Act
@@ -84,7 +92,10 @@ class DeployServiceTest {
     @Test
     void testUndeploy() {
         // Arrange
-        when(kubernetesService.deleteKnativeService(
+        when(kubernetesService.deployClient()).thenReturn(kubernetesClient);
+        when(kubernetesService.getKnativeServiceVersion()).thenReturn(TEST_SERVICE_VERSION);
+        when(kubernetesClient.deleteKnativeService(
+                deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture()))
                 .thenReturn(Mono.empty());
@@ -98,13 +109,16 @@ class DeployServiceTest {
                 .verifyComplete();
 
         assertThat(deleteServiceCaptor.getAllValues())
-                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-app-test-name"));
+                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-app-test-name", TEST_SERVICE_VERSION));
     }
 
     @Test
     void testUndeployReturnsFalse() {
         // Arrange
-        when(kubernetesService.deleteKnativeService(
+        when(kubernetesService.deployClient()).thenReturn(kubernetesClient);
+        when(kubernetesService.getKnativeServiceVersion()).thenReturn(TEST_SERVICE_VERSION);
+        when(kubernetesClient.deleteKnativeService(
+                deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture()))
                 .thenReturn(Mono.error(new ApiException(404, "Not found")));
@@ -118,6 +132,6 @@ class DeployServiceTest {
                 .verifyComplete();
 
         assertThat(deleteServiceCaptor.getAllValues())
-                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-app-test-name"));
+                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-app-test-name", TEST_SERVICE_VERSION));
     }
 }

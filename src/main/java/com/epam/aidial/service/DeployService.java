@@ -1,6 +1,7 @@
 package com.epam.aidial.service;
 
 import com.epam.aidial.dto.GetApplicationLogsResponseDto;
+import com.epam.aidial.kubernetes.KubernetesClient;
 import com.epam.aidial.util.KubernetesUtils;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1PodList;
@@ -27,17 +28,26 @@ public class DeployService {
     @Value("${app.service-container}")
     private final String serviceContainer;
 
+    @Value("${app.service-setup-timeout-sec}")
+    private final int serviceSetupTimeoutSec;
+
     public Mono<String> deploy(String name, Map<String, String> env) {
+        KubernetesClient kubernetesClient = kubernetesService.deployClient();
         return Mono.fromCallable(() -> templateService.appServiceConfig(name, env))
-                .flatMap(service -> kubernetesService.createKnativeService(namespace, service));
+                .flatMap(service -> kubernetesClient.createKnativeService(namespace, service, serviceSetupTimeoutSec));
     }
 
     public Mono<Boolean> undeploy(String name) {
-        return KubernetesUtils.skipIfNotFound(kubernetesService.deleteKnativeService(namespace, appName(name)), Boolean.FALSE);
+        KubernetesClient kubernetesClient = kubernetesService.deployClient();
+        return KubernetesUtils.skipIfNotFound(
+                kubernetesClient.deleteKnativeService(
+                        namespace, appName(name), kubernetesService.getKnativeServiceVersion()),
+                Boolean.FALSE);
     }
 
     public Mono<List<GetApplicationLogsResponseDto.LogEntry>> logs(String name) {
-        return kubernetesService.getKnativeServicePods(namespace, appName(name))
+        KubernetesClient kubernetesClient = kubernetesService.deployClient();
+        return kubernetesClient.getKnativeServicePods(namespace, appName(name))
                 .flatMapIterable(V1PodList::getItems)
                 .flatMap(pod -> {
                     if (!isContainerReady(pod.getStatus(), serviceContainer)) {
@@ -45,7 +55,7 @@ public class DeployService {
                     }
 
                     String podName = pod.getMetadata().getName();
-                    return kubernetesService.getContainerLog(namespace, podName, serviceContainer)
+                    return kubernetesClient.getContainerLog(namespace, podName, serviceContainer)
                             .map(text -> new GetApplicationLogsResponseDto.LogEntry(podName, text));
                 })
                 .collectList();

@@ -1,5 +1,6 @@
 package com.epam.aidial.service;
 
+import com.epam.aidial.kubernetes.KubernetesClient;
 import com.epam.aidial.util.KubernetesUtils;
 import com.epam.aidial.util.TextUtils;
 import io.kubernetes.client.openapi.models.V1PodList;
@@ -29,15 +30,19 @@ public class BuildService {
     @Value("${app.max-error-log-chars}")
     private final int maxErrorLogChars;
 
+    @Value("${app.image-build-timeout-sec}")
+    private final int imageBuildTimeoutSec;
+
     public Mono<String> build(BuildParameters params) {
+        KubernetesClient kubernetesClient = kubernetesService.buildClient();
         return Mono.fromCallable(() -> templateService.dialAuthSecretConfig(params.name, params.apiKey, params.jwt))
-                .flatMap(secret -> kubernetesService.createSecret(namespace, secret))
+                .flatMap(secret -> kubernetesClient.createSecret(namespace, secret))
                 .then(Mono.fromCallable(() -> templateService.buildJobConfig(params.name, params.sources, params.runtime)))
-                .flatMap(job -> kubernetesService.createJob(namespace, job))
+                .flatMap(job -> kubernetesClient.createJob(namespace, job, imageBuildTimeoutSec))
                 .onErrorResume(e -> {
                     String jobName = buildJobName(params.name);
 
-                    return kubernetesService.getJobPods(namespace, jobName)
+                    return kubernetesClient.getJobPods(namespace, jobName)
                             .flatMap(this::extractErrorFromLog)
                             .flatMap(error -> Mono.error(new RuntimeException(error)))
                             .then(Mono.error(e));
@@ -46,9 +51,10 @@ public class BuildService {
     }
 
     public Mono<Boolean> clean(String name) {
+        KubernetesClient kubernetesClient = kubernetesService.buildClient();
         return Mono.just(Boolean.FALSE)
-                .flatMap(deleted -> KubernetesUtils.skipIfNotFound(kubernetesService.deleteJob(namespace, buildJobName(name)), deleted))
-                .flatMap(deleted -> KubernetesUtils.skipIfNotFound(kubernetesService.deleteSecret(namespace, dialAuthSecretName(name)), deleted))
+                .flatMap(deleted -> KubernetesUtils.skipIfNotFound(kubernetesClient.deleteJob(namespace, buildJobName(name)), deleted))
+                .flatMap(deleted -> KubernetesUtils.skipIfNotFound(kubernetesClient.deleteSecret(namespace, dialAuthSecretName(name)), deleted))
                 .flatMap(deleted -> registryService.getDigest(name)
                         .flatMap(digest -> registryService.deleteManifest(name, digest))
                         .map(d -> d || deleted)
@@ -56,8 +62,9 @@ public class BuildService {
     }
 
     private Mono<String> extractErrorFromLog(V1PodList podList) {
+        KubernetesClient kubernetesClient = kubernetesService.buildClient();
         return Mono.fromCallable(() -> KubernetesUtils.extractFailedContainer(podList))
-                .flatMap(container -> kubernetesService.getContainerLog(
+                .flatMap(container -> kubernetesClient.getContainerLog(
                         namespace, container.getKey(), container.getValue()))
                 .map(text -> {
                     int validationErrorIndex = text.indexOf(APP_VALIDATION_ERROR_PREFIX);

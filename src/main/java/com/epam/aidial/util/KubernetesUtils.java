@@ -3,6 +3,7 @@ package com.epam.aidial.util;
 import com.epam.aidial.kubernetes.knative.V1Condition;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import com.epam.aidial.kubernetes.knative.V1ServiceStatus;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1Job;
@@ -11,12 +12,19 @@ import io.kubernetes.client.openapi.models.V1JobStatus;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodStatus;
+import io.kubernetes.client.util.ClientBuilder;
+import io.kubernetes.client.util.KubeConfig;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -124,5 +132,17 @@ public class KubernetesUtils {
                         ? Mono.just(Boolean.FALSE)
                         : Mono.error(e))
                 .map(deleted -> previous || deleted);
+    }
+
+    public ApiClient createClient(@Nullable String configPath) throws IOException {
+        if (StringUtils.isBlank(configPath)) {
+            return ClientBuilder.defaultClient();
+        }
+
+        try (Reader reader = Files.newBufferedReader(Path.of(configPath))) {
+            KubeConfig config = KubeConfig.loadKubeConfig(reader);
+
+            return ClientBuilder.kubeconfig(config).build();
+        }
     }
 }
