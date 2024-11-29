@@ -10,3 +10,4 @@ jobs:
     secrets: inherit
     with:
       ort_version: 39.0.0
+      java_version: 21
