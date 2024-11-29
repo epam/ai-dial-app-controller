@@ -5,6 +5,7 @@ logging:
     org.yaml.snakeyaml.introspector: ERROR
 
 app:
+  kube-config: ${user.home}/.kube/config
   build-namespace: build-namespace
   deploy-namespace: deploy-namespace
   docker-registry: docker.registry

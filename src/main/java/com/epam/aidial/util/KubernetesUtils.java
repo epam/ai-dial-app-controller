@@ -134,13 +134,12 @@ public class KubernetesUtils {
                 .map(deleted -> previous || deleted);
     }
 
-    public ApiClient createClient(@Nullable String configPath) throws IOException {
-        if (StringUtils.isBlank(configPath)) {
-            return ClientBuilder.defaultClient();
-        }
-
+    public ApiClient createClient(String configPath, @Nullable String context) throws IOException {
         try (Reader reader = Files.newBufferedReader(Path.of(configPath))) {
             KubeConfig config = KubeConfig.loadKubeConfig(reader);
+            if (StringUtils.isNotBlank(context)) {
+                config.setContext(context);
+            }
 
             return ClientBuilder.kubeconfig(config).build();
         }
