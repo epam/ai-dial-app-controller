@@ -1,6 +1,7 @@
 package com.epam.aidial.service;
 
 import com.epam.aidial.kubernetes.knative.V1Service;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.util.Yaml;
@@ -31,6 +32,12 @@ class ConfigServiceTest {
 
     @MockitoBean
     private RegistryService registryService;
+
+    @MockitoBean
+    private ApiClient buildKubeClient;
+
+    @MockitoBean
+    private ApiClient deployKubeClient;
 
     @Captor
     private ArgumentCaptor<String> fullImageNameCaptor;
