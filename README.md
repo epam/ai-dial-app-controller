@@ -45,6 +45,7 @@ AI-Dial App Controller is a Java-based web service application that orchestrates
    docker run -p 8080:8080 \
      -e APP_DOCKER_REGISTRY=your-docker-registry \
      -e APP_DIAL_BASE_URL=https://your-dial-base-url \
+     -v ~/.kube/config:/home/appuser/.kube/config \
      ai-dial-app-controller
    ```
 
@@ -87,7 +88,7 @@ Builds a Docker image from the specified source code.
 ```bash
 curl -N -X POST http://localhost:8080/v1/image/my-python-app \
      -H "Content-Type: application/json" \
-     -H "Authorization: Bearer DIAL_JWT_TOKEN" \
+     -H "Authorization: Bearer JWT_TOKEN" \
      -d '{
            "sources": "files/dial bucket/sources folder",
            "runtime": "python3.11"
