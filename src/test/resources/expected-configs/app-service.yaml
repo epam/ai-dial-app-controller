@@ -17,7 +17,7 @@ spec:
         - env:
             - name: test-env-name
               value: test-env-value
-          image: test-image-name
+          image: test-docker-registry/app-test-name:latest
           imagePullPolicy: Always
           name: test-container
           resources:

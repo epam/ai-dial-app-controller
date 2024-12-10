@@ -9,6 +9,8 @@ app:
   build-namespace: default
   deploy-namespace: default
   docker-registry-protocol: https
+  docker-registry-auth: NONE
+  docker-config-path: /kaniko/.docker/config.json
   template-image: ${app.docker-registry}/builder-template:latest
   builder-image: gcr.io/kaniko-project/executor:latest
   image-name-format: app-%s

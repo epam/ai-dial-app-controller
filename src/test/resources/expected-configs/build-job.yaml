@@ -11,7 +11,7 @@ spec:
         - args:
             - --context=/sources
             - --dockerfile=/templates/python-pip/Dockerfile
-            - --destination=test-image-name
+            - --destination=test-docker-registry/app-test-name:latest
             - --build-arg=PYTHON_IMAGE=python:3.11-slim
           image: test-builder-image
           name: builder
@@ -24,6 +24,9 @@ spec:
               name: volume
               readOnly: true
               subPath: templates
+            - mountPath: /kaniko/.docker/config.json
+              name: secret-volume
+              subPath: docker.config
       initContainers:
         - env:
             - name: DIAL_BASE_URL
@@ -59,3 +62,6 @@ spec:
         - emptyDir:
             sizeLimit: 10Mi
           name: volume
+        - name: secret-volume
+          secret:
+            secretName: app-ctrl-dial-auth-test-name

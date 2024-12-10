@@ -1,6 +1,8 @@
 package com.epam.aidial.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -16,19 +18,24 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegistryService {
-    private static final String MANIFEST_URL_TEMPLATE = "%s://%s/v2/%s/manifests/%s";
+    private static final String API_URL_TEMPLATE = "%s://%s/v2";
+    private static final String MANIFEST_URL_TEMPLATE = API_URL_TEMPLATE + "/%s/manifests/%s";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final OkHttpClient okHttpClient;
 
     @Value("${app.docker-registry}")
-    private final String dockerRegistry;
+    private final String registry;
 
     @Value("${app.docker-registry-protocol}")
-    private final URI dockerRegistryProtocol;
+    private final URI registryProtocol;
 
     @Value("${app.image-name-format}")
     private final String imageFormat;
@@ -46,7 +53,7 @@ public class RegistryService {
             String imageName = imageName(name);
             log.info("Retrieving digest for {} from manifest {}", imageName, manifestVersion);
             String url = MANIFEST_URL_TEMPLATE.formatted(
-                    dockerRegistryProtocol, dockerRegistry, imageName, imageLabel);
+                    registryProtocol, registry, imageName, imageLabel);
             Request request = new Request.Builder()
                     .head()
                     .url(url)
@@ -85,7 +92,7 @@ public class RegistryService {
             String imageName = imageName(name);
             log.info("Deleting {} manifest", imageName);
             String url = MANIFEST_URL_TEMPLATE.formatted(
-                    dockerRegistryProtocol, dockerRegistry, imageName, digest);
+                    registryProtocol, registry, imageName, digest);
             Request request = new Request.Builder()
                     .delete()
                     .url(url)
@@ -112,7 +119,18 @@ public class RegistryService {
     }
 
     public String fullImageName(String name) {
-        return "%s/%s:%s".formatted(dockerRegistry, imageName(name), imageLabel);
+        return "%s/%s:%s".formatted(registry, imageName(name), imageLabel);
+    }
+
+    @SneakyThrows
+    public String dockerConfig(String user, String password) {
+        byte[] bytes = "%s:%s".formatted(user, password).getBytes(StandardCharsets.UTF_8);
+        String auth = Base64.getEncoder().encodeToString(bytes);
+        return MAPPER.writeValueAsString(Map.of(
+                "auths",
+                Map.of(
+                        API_URL_TEMPLATE.formatted(registryProtocol, registry),
+                        Map.of("auth", auth))));
     }
 
     private String imageName(String name) {

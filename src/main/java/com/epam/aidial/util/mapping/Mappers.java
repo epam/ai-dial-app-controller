@@ -13,6 +13,8 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodTemplateSpec;
 import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1Volume;
+import io.kubernetes.client.openapi.models.V1VolumeMount;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
@@ -29,6 +31,16 @@ public class Mappers {
             V1EnvVar::new,
             V1EnvVar::getName,
             V1EnvVar::setName);
+
+    public static final NamedItemMapper<V1Volume> VOLUME_NAME = new NamedItemMapper<>(
+            V1Volume::new,
+            V1Volume::getName,
+            V1Volume::setName);
+
+    public static final NamedItemMapper<V1VolumeMount> VOLUME_MOUNT_PATH = new NamedItemMapper<>(
+            V1VolumeMount::new,
+            V1VolumeMount::getMountPath,
+            V1VolumeMount::setMountPath);
 
     public static final FieldMapper<V1Secret, V1ObjectMeta> SECRET_METADATA_FIELD = new FieldMapper<>(
             V1ObjectMeta::new,
@@ -64,6 +76,11 @@ public class Mappers {
             ArrayList::new,
             V1PodSpec::getContainers,
             V1PodSpec::setContainers);
+
+    public static final FieldMapper<V1PodSpec, List<V1Volume>> POD_VOLUMES_FIELD = new FieldMapper<>(
+            ArrayList::new,
+            V1PodSpec::getVolumes,
+            V1PodSpec::setVolumes);
 
     public static final FieldMapper<V1Service, V1ObjectMeta> SERVICE_METADATA_FIELD = new FieldMapper<>(
             V1ObjectMeta::new,
@@ -104,4 +121,9 @@ public class Mappers {
             ArrayList::new,
             V1Container::getArgs,
             V1Container::setArgs);
+
+    public static final FieldMapper<V1Container, List<V1VolumeMount>> CONTAINER_VOLUME_MOUNTS_FIELD = new FieldMapper<>(
+            ArrayList::new,
+            V1Container::getVolumeMounts,
+            V1Container::setVolumeMounts);
 }

@@ -7,8 +7,6 @@ import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.util.Yaml;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,19 +17,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("configtest")
 class ConfigServiceTest {
     private static final String TEST_NAME = "test-name";
-    private static final String TEST_IMAGE_NAME = "test-image-name";
 
     @Autowired
     private ConfigService configService;
-
-    @MockitoBean
-    private RegistryService registryService;
 
     @MockitoBean
     private ApiClient buildKubeClient;
@@ -39,23 +32,21 @@ class ConfigServiceTest {
     @MockitoBean
     private ApiClient deployKubeClient;
 
-    @Captor
-    private ArgumentCaptor<String> fullImageNameCaptor;
-
     @Test
     void testDialAuthSecretConfig() throws IOException {
+        // Arrange
         V1Secret expected = readExpected("dial-auth-secret", V1Secret.class);
 
+        // Act
         V1Secret actual = configService.dialAuthSecretConfig(TEST_NAME, "test-api-key", "test-jwt");
 
+        // Assert
         assertThat(Yaml.dump(actual)).isEqualTo(Yaml.dump(expected));
     }
 
     @Test
     void testBuildJobConfig() throws IOException {
         // Arrange
-        when(registryService.fullImageName(fullImageNameCaptor.capture()))
-                .thenReturn(TEST_IMAGE_NAME);
         V1Job expected = readExpected("build-job", V1Job.class);
 
         // Act
@@ -63,14 +54,11 @@ class ConfigServiceTest {
 
         // Assert
         assertThat(Yaml.dump(actual)).isEqualTo(Yaml.dump(expected));
-        assertThat(fullImageNameCaptor.getValue()).isEqualTo(TEST_NAME);
     }
 
     @Test
     void testAppServiceConfig() throws IOException {
         // Arrange
-        when(registryService.fullImageName(fullImageNameCaptor.capture()))
-                .thenReturn(TEST_IMAGE_NAME);
         V1Service expected = readExpected("app-service", V1Service.class);
 
         // Act
@@ -78,7 +66,6 @@ class ConfigServiceTest {
 
         // Assert
         assertThat(Yaml.dump(actual)).isEqualTo(Yaml.dump(expected));
-        assertThat(fullImageNameCaptor.getValue()).isEqualTo(TEST_NAME);
     }
 
     private static <T> T readExpected(String name, Class<T> clazz) throws IOException {

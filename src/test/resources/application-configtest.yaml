@@ -1,5 +1,9 @@
 app:
+  docker-registry: test-docker-registry
   template-image: test-template-image
   builder-image: test-builder-image
   dial-base-url: test-dial-base-url
   service-container: test-container
+  docker-registry-auth: BASIC
+  docker-registry-user: test
+  docker-registry-pass: password
