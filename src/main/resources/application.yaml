@@ -100,7 +100,6 @@ app:
       backoffLimit: 0
       template:
         spec:
-          serviceAccountName: builder
           automountServiceAccountToken: false
           initContainers:
             - name: ${app.template-container}

@@ -79,10 +79,8 @@ public class ConfigService {
         if (StringUtils.isNotBlank(jwt)) {
             creds.put("JWT", jwt);
         }
-        if (appconfig.getDockerRegistryAuth() == DockerAuthScheme.BASIC) {
-            String dockerConfig = registryService.dockerConfig(
-                    appconfig.getDockerRegistryUser(), appconfig.getDockerRegistryPass());
-            creds.put(DOCKER_CONFIG_KEY, dockerConfig);
+        if (registryService.getAuthScheme() == DockerAuthScheme.BASIC) {
+            creds.put(DOCKER_CONFIG_KEY, registryService.dockerConfig());
         }
 
         MappingChain<V1Secret> config = new MappingChain<>(this.appconfig.cloneSecretConfig());
@@ -127,7 +125,7 @@ public class ConfigService {
                         "--dockerfile=/templates/%s/Dockerfile".formatted(runtimeConfig.getProfile()),
                         "--destination=%s".formatted(targetImage),
                         "--build-arg=PYTHON_IMAGE=%s".formatted(runtimeConfig.getImage())));
-        if (appconfig.getDockerRegistryAuth() == DockerAuthScheme.BASIC) {
+        if (registryService.getAuthScheme() == DockerAuthScheme.BASIC) {
             String volumeName = "secret-volume";
             podSpec.getList(POD_VOLUMES_FIELD, VOLUME_NAME)
                     .get(volumeName)

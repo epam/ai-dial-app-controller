@@ -1,16 +1,20 @@
 package com.epam.aidial.service;
 
+import com.epam.aidial.config.DockerAuthScheme;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,6 +25,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import javax.annotation.PostConstruct;
 
 @Slf4j
 @Service
@@ -43,6 +48,26 @@ public class RegistryService {
     @Value("${app.image-label}")
     private final String imageLabel;
 
+    @Getter
+    @Value("${app.docker-registry-auth}")
+    private final DockerAuthScheme authScheme;
+
+    @Nullable
+    @Value("${app.docker-registry-user:#{null}}")
+    private final String user;
+
+    @Nullable
+    @Value("${app.docker-registry-pass:#{null}}")
+    private final String password;
+
+    @PostConstruct
+    public void validate() {
+        if (authScheme == DockerAuthScheme.BASIC
+                && (StringUtils.isBlank(user) || password == null)) {
+            throw new IllegalStateException("User and password are required for BASIC docker registry authentication.");
+        }
+    }
+
     public Mono<String> getDigest(String image) {
         return getDigest("application/vnd.oci.image.manifest.v1+json", image)
                 .switchIfEmpty(getDigest("application/vnd.docker.distribution.manifest.v2+json", image));
@@ -54,7 +79,7 @@ public class RegistryService {
             log.info("Retrieving digest for {} from manifest {}", imageName, manifestVersion);
             String url = MANIFEST_URL_TEMPLATE.formatted(
                     registryProtocol, registry, imageName, imageLabel);
-            Request request = new Request.Builder()
+            Request request = requestBuilder()
                     .head()
                     .url(url)
                     .header("Accept", manifestVersion)
@@ -93,7 +118,7 @@ public class RegistryService {
             log.info("Deleting {} manifest", imageName);
             String url = MANIFEST_URL_TEMPLATE.formatted(
                     registryProtocol, registry, imageName, digest);
-            Request request = new Request.Builder()
+            Request request = requestBuilder()
                     .delete()
                     .url(url)
                     .build();
@@ -123,17 +148,30 @@ public class RegistryService {
     }
 
     @SneakyThrows
-    public String dockerConfig(String user, String password) {
-        byte[] bytes = "%s:%s".formatted(user, password).getBytes(StandardCharsets.UTF_8);
-        String auth = Base64.getEncoder().encodeToString(bytes);
-        return MAPPER.writeValueAsString(Map.of(
-                "auths",
-                Map.of(
-                        API_URL_TEMPLATE.formatted(registryProtocol, registry),
-                        Map.of("auth", auth))));
+    public String dockerConfig() {
+        if (authScheme == DockerAuthScheme.BASIC) {
+            byte[] bytes = "%s:%s".formatted(user, password).getBytes(StandardCharsets.UTF_8);
+            String auth = Base64.getEncoder().encodeToString(bytes);
+            return MAPPER.writeValueAsString(Map.of(
+                    "auths",
+                    Map.of(
+                            API_URL_TEMPLATE.formatted(registryProtocol, registry),
+                            Map.of("auth", auth))));
+        }
+
+        return "{}";
     }
 
     private String imageName(String name) {
         return imageFormat.formatted(name);
+    }
+
+    private Request.Builder requestBuilder() {
+        Request.Builder builder = new Request.Builder();
+        if (authScheme == DockerAuthScheme.BASIC) {
+            builder.header("Authorization", Credentials.basic(user, password));
+        }
+
+        return builder;
     }
 }

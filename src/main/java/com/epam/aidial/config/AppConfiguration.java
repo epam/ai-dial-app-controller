@@ -7,13 +7,10 @@ import io.kubernetes.client.util.Yaml;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import javax.annotation.PostConstruct;
 
 @Component
 @ConfigurationProperties(prefix = "app")
@@ -33,20 +30,6 @@ public class AppConfiguration {
     @Getter
     @Setter
     private Map<String, RuntimeConfiguration> runtimes;
-
-    @Getter
-    @Setter
-    private DockerAuthScheme dockerRegistryAuth;
-
-    @Nullable
-    @Getter
-    @Setter
-    private String dockerRegistryUser;
-
-    @Nullable
-    @Getter
-    @Setter
-    private String dockerRegistryPass;
 
     public void setSecretConfig(V1Secret secretConfig) {
         this.secretConfig = secretConfig;
@@ -75,18 +58,9 @@ public class AppConfiguration {
         return Yaml.loadAs(serviceConfigString, V1Service.class);
     }
 
-    @PostConstruct
-    public void validate() {
-        if (dockerRegistryAuth == DockerAuthScheme.BASIC
-                && (StringUtils.isBlank(dockerRegistryUser) || dockerRegistryPass == null)) {
-            throw new IllegalStateException("User and password are required for BASIC docker registry authentication.");
-        }
-    }
-
     @Data
     public static class RuntimeConfiguration {
         private String image;
         private String profile;
     }
-
 }
