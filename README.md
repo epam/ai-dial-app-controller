@@ -33,10 +33,11 @@ AI-Dial App Controller is a Java-based web service application that orchestrates
 
 3. **Prepare the Builder Template:**
 
-   Before starting the application, ensure that the builder template image is built and pushed to your Docker registry. This image is used during the build process of Python applications.
+   Before starting the application, ensure that the [builder template](https://github.com/epam/ai-dial-app-builder-python)
+   image is built and pushed to your Docker registry. This image is used during the build process of Python applications.
 
    ```bash
-   docker buildx build --push -t your-docker-registry/builder-template:latest builder-template
+   docker buildx build --push -t your-docker-registry/builder-template:latest .
    ```
 
 4. **Run the application with environment variables:**
@@ -55,28 +56,30 @@ The application can be configured using environment variables or by modifying th
 
 ### Environment Variables
 
-| Setting                         | Default                                          | Required     | Description                                                  |
-|---------------------------------|--------------------------------------------------|--------------|--------------------------------------------------------------|
-| `APP_DOCKER_REGISTRY`           |                                                  | Yes          | The Docker registry where images are stored.                 |
-| `APP_DIAL_BASE_URL`             |                                                  | Yes          | The base URL for the DIAL service.                           |
-| `APP_DEPLOY_NAMESPACE`          | `default`                                        | No           | The Kubernetes namespace used for deploying services.        |
-| `APP_BUILD_NAMESPACE`           | `default`                                        | No           | The Kubernetes namespace used for building images.           |
-| `APP_HEARTBEAT_PERIOD_SEC`      | `30`                                             | No           | The interval in seconds for sending heartbeat events.        |
-| `APP_IMAGE_NAME_FORMAT`         | `app-%s`                                         | No           | Format for naming Docker images.                             |
-| `APP_IMAGE_LABEL`               | `latest`                                         | No           | The label used for Docker images.                            |
-| `APP_IMAGE_BUILD_TIMEOUT_SEC`   | `300`                                            | No           | Timeout in seconds for building Docker images.               |
-| `APP_SERVICE_SETUP_TIMEOUT_SEC` | `300`                                            | No           | Timeout in seconds for setting up Knative services.          |
-| `APP_MAX_ERROR_LOG_LINES`       | `20`                                             | No           | Maximum number of error log lines to return in message.      |
-| `APP_MAX_ERROR_LOG_CHARS`       | `1000`                                           | No           | Maximum number of error log characters to return in message. |
-| `APP_TEMPLATE_IMAGE`            | `${app.docker-registry}/builder-template:latest` | No           | The Docker image used as the template for building.          |
-| `APP_BUILDER_IMAGE`             | `gcr.io/kaniko-project/executor:latest`          | No           | The Docker image used for building applications.             |
-| `APP_TEMPLATE_CONTAINER`        | `template`                                       | No           | Name of the template container in Kubernetes job.            |
-| `APP_BUILDER_CONTAINER`         | `builder`                                        | No           | Name of the builder container in Kubernetes job.             |
-| `APP_SERVICE_CONTAINER`         | `app-container`                                  | No           | Name of the service container.                               |
-| `APP_DEFAULT_RUNTIME`           | `python3.11`                                     | No           | Default runtime for Python applications.                     |
-| `APP_DOCKER_REGISTRY_AUTH`      | `NONE`                                           | No           | Authentication method for Docker registry (NONE, BASIC).     |
-| `APP_DOCKER_REGISTRY_USER`      |                                                  | Conditional  | Username for Docker registry when auth is BASIC.             |
-| `APP_DOCKER_REGISTRY_PASS`      |                                                  | Conditional  | Password for Docker registry when auth is BASIC.             |
+| Setting                         | Default                                          | Required    | Description                                                                       |
+|---------------------------------|--------------------------------------------------|-------------|-----------------------------------------------------------------------------------|
+| `APP_DOCKER_REGISTRY`           |                                                  | Yes         | The Docker registry where images are stored.                                      |
+| `APP_DIAL_BASE_URL`             |                                                  | Yes         | The base URL for the DIAL service.                                                |
+| `APP_BUILD_CONTEXT`             |                                                  | No          | The Kubernetes context used for building images, as defined in kubeconfig.        |
+| `APP_DEPLOY_CONTEXT`            |                                                  | No          | The Kubernetes context used for deploying applications, as defined in kubeconfig. |
+| `APP_BUILD_NAMESPACE`           | `default`                                        | No          | The Kubernetes namespace used for building images.                                |
+| `APP_BUILD_NAMESPACE`           | `default`                                        | No          | The Kubernetes namespace used for building images.                                |
+| `APP_HEARTBEAT_PERIOD_SEC`      | `30`                                             | No          | The interval in seconds for sending heartbeat events.                             |
+| `APP_IMAGE_NAME_FORMAT`         | `app-%s`                                         | No          | Format for naming Docker images.                                                  |
+| `APP_IMAGE_LABEL`               | `latest`                                         | No          | The label used for Docker images.                                                 |
+| `APP_IMAGE_BUILD_TIMEOUT_SEC`   | `300`                                            | No          | Timeout in seconds for building Docker images.                                    |
+| `APP_SERVICE_SETUP_TIMEOUT_SEC` | `300`                                            | No          | Timeout in seconds for setting up Knative services.                               |
+| `APP_MAX_ERROR_LOG_LINES`       | `20`                                             | No          | Maximum number of error log lines to return in message.                           |
+| `APP_MAX_ERROR_LOG_CHARS`       | `1000`                                           | No          | Maximum number of error log characters to return in message.                      |
+| `APP_TEMPLATE_IMAGE`            | `${app.docker-registry}/builder-template:latest` | No          | The Docker image used as the template for building.                               |
+| `APP_BUILDER_IMAGE`             | `gcr.io/kaniko-project/executor:latest`          | No          | The Docker image used for building applications.                                  |
+| `APP_TEMPLATE_CONTAINER`        | `template`                                       | No          | Name of the template container in Kubernetes job.                                 |
+| `APP_BUILDER_CONTAINER`         | `builder`                                        | No          | Name of the builder container in Kubernetes job.                                  |
+| `APP_SERVICE_CONTAINER`         | `app-container`                                  | No          | Name of the service container.                                                    |
+| `APP_DEFAULT_RUNTIME`           | `python3.11`                                     | No          | Default runtime for Python applications.                                          |
+| `APP_DOCKER_REGISTRY_AUTH`      | `NONE`                                           | No          | Authentication method for Docker registry (NONE, BASIC).                          |
+| `APP_DOCKER_REGISTRY_USER`      |                                                  | Conditional | Username for Docker registry when auth is BASIC.                                  |
+| `APP_DOCKER_REGISTRY_PASS`      |                                                  | Conditional | Password for Docker registry when auth is BASIC.                                  |
 
 ## Usage
 

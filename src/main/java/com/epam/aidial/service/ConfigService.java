@@ -95,6 +95,12 @@ public class ConfigService {
         String targetImage = registryService.fullImageName(name);
         log.info("Target image: {}", targetImage);
 
+        AppConfiguration.RuntimeConfiguration runtimeConfig = this.appconfig.getRuntimes().get(runtime);
+        if (runtimeConfig == null) {
+            throw new IllegalArgumentException(
+                    "Unsupported runtime: %s. Supported: %s".formatted(runtime, this.appconfig.getRuntimes().keySet()));
+        }
+
         MappingChain<V1Job> config = new MappingChain<>(this.appconfig.cloneJobConfig());
         config.get(JOB_METADATA_FIELD)
                 .data()
@@ -104,15 +110,13 @@ public class ConfigService {
                 .get(JOB_TEMPLATE_SPEC_FIELD);
         MappingChain<V1Container> puller = podSpec.getList(POD_INIT_CONTAINERS_FIELD, CONTAINER_NAME)
                 .get(pullerContainer);
-        puller.getList(CONTAINER_ENV_FIELD, ENV_VAR_NAME)
-                .get("SOURCES")
+        ListMapper<V1EnvVar> pullerEnvs = puller.getList(CONTAINER_ENV_FIELD, ENV_VAR_NAME);
+        pullerEnvs.get("SOURCES")
                 .data()
                 .setValue(sources);
-        AppConfiguration.RuntimeConfiguration runtimeConfig = this.appconfig.getRuntimes().get(runtime);
-        if (runtimeConfig == null) {
-            throw new IllegalArgumentException(
-                    "Unsupported runtime: %s. Supported: %s".formatted(runtime, this.appconfig.getRuntimes().keySet()));
-        }
+        pullerEnvs.get("PROFILE")
+                .data()
+                .setValue(runtimeConfig.getProfile());
         String secretName = dialAuthSecretName(name);
         puller.get(CONTAINER_ENV_FROM_FIELD)
                 .data()
@@ -122,9 +126,8 @@ public class ConfigService {
         builder.get(CONTAINER_ARGS_FIELD)
                 .data()
                 .addAll(List.of(
-                        "--dockerfile=/templates/%s/Dockerfile".formatted(runtimeConfig.getProfile()),
                         "--destination=%s".formatted(targetImage),
-                        "--build-arg=PYTHON_IMAGE=%s".formatted(runtimeConfig.getImage())));
+                        "--build-arg=BASE_IMAGE=%s".formatted(runtimeConfig.getImage())));
         if (registryService.getAuthScheme() == DockerAuthScheme.BASIC) {
             String volumeName = "secret-volume";
             podSpec.getList(POD_VOLUMES_FIELD, VOLUME_NAME)
