@@ -9,10 +9,10 @@ spec:
       automountServiceAccountToken: false
       containers:
         - args:
-            - --context=/sources
-            - --dockerfile=/templates/python-pip/Dockerfile
-            - --destination=test-docker-registry/app-test-name:latest
-            - --build-arg=PYTHON_IMAGE=python:3.11-slim
+          - --context=/sources
+          - --dockerfile=/templates/Dockerfile
+          - --destination=test-docker-registry/app-test-name:latest
+          - --build-arg=BASE_IMAGE=python:3.11-slim
           image: test-builder-image
           name: builder
           volumeMounts:
@@ -39,6 +39,8 @@ spec:
             \ "
             - name: SOURCES
               value: test-sources
+            - name: PROFILE
+              value: python-pip
           envFrom:
             - secretRef:
                 name: app-ctrl-dial-auth-test-name

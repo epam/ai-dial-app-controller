@@ -126,6 +126,7 @@ app:
               image: ${app.builder-image}
               args:
                 - "--context=/sources"
+                - "--dockerfile=/templates/Dockerfile"
               volumeMounts:
                 - name: volume
                   subPath: sources
