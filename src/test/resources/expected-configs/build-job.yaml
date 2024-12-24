@@ -33,7 +33,7 @@ spec:
               value: test-dial-base-url
             - name: ALLOWED_PACKAGES
               value: "aidial-sdk\nanthropic\nbeautifulsoup4\nchromadb\ncolorama\nfastapi\n\
-            faiss-cpu\nflake8\nflask\ninquirer\nlangchain\nlangchain-community\nlangchain-openai\n\
+            faiss-cpu\nflake8\nflask\nhttpx\ninquirer\nlangchain\nlangchain-community\nlangchain-openai\n\
             langchain-text-splitters\nnumpy\nopenai\npandas\npyright\npython-dotenv\n\
             python-multipart\nprompt-toolkit\npypdf\nrequests\ntiktoken\nuvicorn\n\
             \ "

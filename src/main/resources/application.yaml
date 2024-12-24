@@ -33,6 +33,7 @@ app:
     faiss-cpu
     flake8
     flask
+    httpx
     inquirer
     langchain
     langchain-community
