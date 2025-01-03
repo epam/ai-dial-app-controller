@@ -18,6 +18,7 @@ import io.kubernetes.client.util.Watch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
+import org.apache.commons.lang3.Validate;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -33,6 +34,7 @@ public class KubernetesClient {
     private static final TypeToken<Watch.Response<V1Service>> SERVICE_TYPE_TOKEN = new TypeToken<>() {
     };
     private static final String FOREGROUND_POLICY = "Foreground";
+    private static final String NAME_SELECTOR_PREFIX = "metadata.name=";
 
     private final ApiClient apiClient;
 
@@ -95,6 +97,7 @@ public class KubernetesClient {
             BatchV1Api batchApi = new BatchV1Api(apiClient);
             Call call = batchApi.listNamespacedJob(namespace)
                     .watch(true)
+                    .fieldSelector(NAME_SELECTOR_PREFIX + name)
                     .timeoutSeconds(imageBuildTimeoutSec)
                     .buildCall(null);
 
@@ -106,8 +109,8 @@ public class KubernetesClient {
                 log.info("Waiting for job {} to complete", name);
                 for (Watch.Response<V1Job> item : watch) {
                     V1Job jobState = item.object;
-                    if (jobState != null && name.equals(jobState.getMetadata().getName())
-                            && KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                    if (jobState != null && KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                        Validate.isTrue(name.equals(jobState.getMetadata().getName()));
                         log.info("Job {} has completed successfully", name);
                         return null;
                     }
@@ -211,6 +214,7 @@ public class KubernetesClient {
             CustomObjectsApi customObjectsApi = new CustomObjectsApi(apiClient);
             Call call = customObjectsApi.listNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES)
                     .watch(true)
+                    .fieldSelector(NAME_SELECTOR_PREFIX + name)
                     .timeoutSeconds(serviceSetupTimeoutSec)
                     .buildCall(null);
             try (Watch<V1Service> watch = Watch.createWatch(
@@ -221,7 +225,8 @@ public class KubernetesClient {
 
                 for (Watch.Response<V1Service> item : watch) {
                     V1Service serviceState = item.object;
-                    if (serviceState != null && name.equals(serviceState.getMetadata().getName())) {
+                    if (serviceState != null) {
+                        Validate.isTrue(name.equals(serviceState.getMetadata().getName()));
                         String url = KubernetesUtils.extractServiceUrl(serviceState);
                         if (url != null) {
                             log.info("Service {} has been set up", name);
