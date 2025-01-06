@@ -109,10 +109,14 @@ public class KubernetesClient {
                 log.info("Waiting for job {} to complete", name);
                 for (Watch.Response<V1Job> item : watch) {
                     V1Job jobState = item.object;
-                    if (jobState != null && KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                    if (jobState != null) {
                         Validate.isTrue(name.equals(jobState.getMetadata().getName()));
-                        log.info("Job {} has completed successfully", name);
-                        return null;
+                        if (KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                            log.info("Job {} has completed successfully", name);
+                            return null;
+                        }
+                    } else {
+                        logStatus(item.status);
                     }
                 }
             }
@@ -120,6 +124,14 @@ public class KubernetesClient {
             throw new IllegalStateException("Subscription to job %s events expired".formatted(name));
         })
         .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private static void logStatus(V1Status status) {
+        if (status != null) {
+            log.info("Received status: {}", status.toJson());
+        } else {
+            log.info("Unknown event type received");
+        }
     }
 
     public Mono<V1PodList> getJobPods(String namespace, String name) {
@@ -232,6 +244,8 @@ public class KubernetesClient {
                             log.info("Service {} has been set up", name);
                             return url;
                         }
+                    } else {
+                        logStatus(item.status);
                     }
                 }
             }

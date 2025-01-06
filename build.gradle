@@ -35,14 +35,14 @@ repositories {
 dependencies {
     implementation 'io.kubernetes:client-java:22.0.0'
     implementation 'commons-io:commons-io:2.16.1'
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.0'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.0'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.1'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.1'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.1'
     testImplementation 'io.projectreactor:reactor-test:3.6.10'
     testImplementation 'org.assertj:assertj-core:3.26.3'
 
