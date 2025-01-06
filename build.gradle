@@ -48,7 +48,6 @@ dependencies {
 
     // Security fix:
     implementation 'io.netty:netty-common:4.1.115.Final' // CVE-2024-47535
-    implementation 'ch.qos.logback:logback-core:1.5.15' // CVE-2024-12801, CVE-2024-12798
 }
 
 application {
