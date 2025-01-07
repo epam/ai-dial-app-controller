@@ -2,7 +2,6 @@ package com.epam.aidial.service;
 
 import com.epam.aidial.kubernetes.KubernetesClient;
 import com.epam.aidial.kubernetes.knative.V1Service;
-import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -98,7 +97,7 @@ class DeployServiceTest {
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture()))
-                .thenReturn(Mono.empty());
+                .thenReturn(Mono.just(Boolean.TRUE));
 
         // Act
         Mono<Boolean> actual = deployService.undeploy(TEST_NAME);
@@ -121,7 +120,7 @@ class DeployServiceTest {
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture()))
-                .thenReturn(Mono.error(new ApiException(404, "Not found")));
+                .thenReturn(Mono.just(Boolean.FALSE));
 
         // Act
         Mono<Boolean> actual = deployService.undeploy(TEST_NAME);
