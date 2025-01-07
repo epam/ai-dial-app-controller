@@ -198,7 +198,6 @@ public class KubernetesClient {
             log.info("Deleting a job {}", name);
             try {
                 batchV1Api.deleteNamespacedJob(name, namespace)
-                        .propagationPolicy(FOREGROUND_POLICY)
                         .executeAsync(new NoProgressApiCallback<>() {
                             @Override
                             public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
