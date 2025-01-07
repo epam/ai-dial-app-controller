@@ -65,8 +65,8 @@ public class KubernetesClient {
         });
     }
 
-    public Mono<Void> deleteSecret(String namespace, String name) {
-        return Mono.create(sink -> {
+    public Mono<Boolean> deleteSecret(String namespace, String name) {
+        return handleMissing(Mono.create(sink -> {
             CoreV1Api coreApi = new CoreV1Api(apiClient);
             log.info("Deleting a secret {}", name);
             try {
@@ -86,7 +86,7 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        });
+        }));
     }
 
     public Mono<Void> createJob(String namespace, V1Job job, int imageBuildTimeoutSec) {
@@ -192,8 +192,8 @@ public class KubernetesClient {
         });
     }
 
-    public Mono<Void> deleteJob(String namespace, String name) {
-        return Mono.create(sink -> {
+    public Mono<Boolean> deleteJob(String namespace, String name) {
+        return handleMissing(Mono.create(sink -> {
             BatchV1Api batchV1Api = new BatchV1Api(apiClient);
             log.info("Deleting a job {}", name);
             try {
@@ -214,7 +214,7 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        });
+        }));
     }
 
     public Mono<String> createKnativeService(String namespace, V1Service service, int serviceSetupTimeoutSec) {
@@ -255,8 +255,8 @@ public class KubernetesClient {
         .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<Void> deleteKnativeService(String namespace, String name, String serviceVersion) {
-        return Mono.create(sink -> {
+    public Mono<Boolean> deleteKnativeService(String namespace, String name, String serviceVersion) {
+        return handleMissing(Mono.create(sink -> {
             ServiceVersion version = ServiceVersion.parse(serviceVersion);
 
             CustomObjectsApi customObjectsApi = new CustomObjectsApi(apiClient);
@@ -279,12 +279,20 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        });
+        }));
     }
 
     public static void addKnativeServiceToModelMap(String serviceVersion) {
         ServiceVersion version = ServiceVersion.parse(serviceVersion);
         ModelMapper.addModelMap(version.group(), version.version(), "Service", SERVICES, true, V1Service.class);
+    }
+
+    private static Mono<Boolean> handleMissing(Mono<Void> operation) {
+        return operation
+                .thenReturn(Boolean.TRUE)
+                .onErrorResume(e -> e instanceof ApiException apiException && apiException.getCode() == 404
+                        ? Mono.just(Boolean.FALSE)
+                        : Mono.error(e));
     }
 
     public record ServiceVersion(String group, String version) {

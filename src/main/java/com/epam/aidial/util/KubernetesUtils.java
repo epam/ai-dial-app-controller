@@ -4,7 +4,6 @@ import com.epam.aidial.kubernetes.knative.V1Condition;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import com.epam.aidial.kubernetes.knative.V1ServiceStatus;
 import io.kubernetes.client.openapi.ApiClient;
-import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobCondition;
@@ -19,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -123,15 +121,6 @@ public class KubernetesUtils {
                         && containerStatus.getState().getTerminated().getExitCode() != 0)
                 .map(V1ContainerStatus::getName)
                 .findFirst();
-    }
-
-    public Mono<Boolean> skipIfNotFound(Mono<Void> operation, Boolean previous) {
-        return operation
-                .thenReturn(Boolean.TRUE)
-                .onErrorResume(e -> e instanceof ApiException apiException && apiException.getCode() == 404
-                        ? Mono.just(Boolean.FALSE)
-                        : Mono.error(e))
-                .map(deleted -> previous || deleted);
     }
 
     public ApiClient createClient(String configPath, @Nullable String context) throws IOException {

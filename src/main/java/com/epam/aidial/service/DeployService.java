@@ -2,7 +2,6 @@ package com.epam.aidial.service;
 
 import com.epam.aidial.dto.GetApplicationLogsResponseDto;
 import com.epam.aidial.kubernetes.KubernetesClient;
-import com.epam.aidial.util.KubernetesUtils;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodStatus;
@@ -39,10 +38,8 @@ public class DeployService {
 
     public Mono<Boolean> undeploy(String name) {
         KubernetesClient kubernetesClient = kubernetesService.deployClient();
-        return KubernetesUtils.skipIfNotFound(
-                kubernetesClient.deleteKnativeService(
-                        namespace, appName(name), kubernetesService.getKnativeServiceVersion()),
-                Boolean.FALSE);
+        return kubernetesClient.deleteKnativeService(
+                namespace, appName(name), kubernetesService.getKnativeServiceVersion());
     }
 
     public Mono<List<GetApplicationLogsResponseDto.LogEntry>> logs(String name) {
