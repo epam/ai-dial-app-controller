@@ -6,6 +6,7 @@ import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodStatus;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -30,9 +31,15 @@ public class DeployService {
     @Value("${app.service-setup-timeout-sec}")
     private final int serviceSetupTimeoutSec;
 
-    public Mono<String> deploy(String name, Map<String, String> env) {
+    public Mono<String> deploy(
+            String name,
+            Map<String, String> env,
+            @Nullable String image,
+            @Nullable Integer initialScale,
+            @Nullable Integer minScale,
+            @Nullable Integer maxScale) {
         KubernetesClient kubernetesClient = kubernetesService.deployClient();
-        return Mono.fromCallable(() -> templateService.appServiceConfig(name, env))
+        return Mono.fromCallable(() -> templateService.appServiceConfig(name, env, image, initialScale, minScale, maxScale))
                 .flatMap(service -> kubernetesClient.createKnativeService(namespace, service, serviceSetupTimeoutSec));
     }
 
