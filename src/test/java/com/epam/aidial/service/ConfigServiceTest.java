@@ -62,7 +62,31 @@ class ConfigServiceTest {
         V1Service expected = readExpected("app-service", V1Service.class);
 
         // Act
-        V1Service actual = configService.appServiceConfig(TEST_NAME, Map.of("test-env-name", "test-env-value"));
+        V1Service actual = configService.appServiceConfig(
+                TEST_NAME,
+                Map.of("test-env-name", "test-env-value"),
+                null,
+                null,
+                null,
+                null);
+
+        // Assert
+        assertThat(Yaml.dump(actual)).isEqualTo(Yaml.dump(expected));
+    }
+
+    @Test
+    void testAppServiceConfigWithExtraParameters() throws IOException {
+        // Arrange
+        V1Service expected = readExpected("app-service-extra", V1Service.class);
+
+        // Act
+        V1Service actual = configService.appServiceConfig(
+                TEST_NAME,
+                Map.of("test-env-name", "test-env-value"),
+                "image-name",
+                1,
+                2,
+                3);
 
         // Assert
         assertThat(Yaml.dump(actual)).isEqualTo(Yaml.dump(expected));

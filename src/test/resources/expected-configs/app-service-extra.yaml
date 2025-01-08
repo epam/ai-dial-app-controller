@@ -1,0 +1,32 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: app-ctrl-app-test-name
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/window: '300s'
+        autoscaling.knative.dev/initial-scale: '1'
+        autoscaling.knative.dev/max-scale: '3'
+        autoscaling.knative.dev/min-scale: '2'
+    spec:
+      idleTimeoutSeconds: 300
+      containerConcurrency: 50
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: test-env-name
+              value: test-env-value
+          image: image-name
+          imagePullPolicy: Always
+          name: test-container
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1G
+              ephemeral-storage: 500M
+            limits:
+              cpu: 1000m
+              memory: 4G
+              ephemeral-storage: 1G

@@ -66,7 +66,11 @@ class DeployServiceTest {
         when(kubernetesService.deployClient()).thenReturn(kubernetesClient);
         when(templateService.appServiceConfig(
                 (String) appServiceConfigCaptor.capture(),
-                (Map<String, String>) appServiceConfigCaptor.capture()))
+                (Map<String, String>) appServiceConfigCaptor.capture(),
+                (String) appServiceConfigCaptor.capture(),
+                (Integer) appServiceConfigCaptor.capture(),
+                (Integer) appServiceConfigCaptor.capture(),
+                (Integer) appServiceConfigCaptor.capture()))
                 .thenReturn(testService);
         when(kubernetesClient.createKnativeService(
                 (String) createServiceCaptor.capture(),
@@ -75,7 +79,7 @@ class DeployServiceTest {
                 .thenReturn(Mono.just(TEST_URL));
 
         // Act
-        Mono<String> actual = deployService.deploy(TEST_NAME, TEST_ENV);
+        Mono<String> actual = deployService.deploy(TEST_NAME, TEST_ENV, "image-name", 1, 2, 3);
 
         // Assert
         StepVerifier.create(actual)
@@ -83,7 +87,7 @@ class DeployServiceTest {
                 .verifyComplete();
 
         assertThat(appServiceConfigCaptor.getAllValues())
-                .isEqualTo(List.of(TEST_NAME, TEST_ENV));
+                .isEqualTo(List.of(TEST_NAME, TEST_ENV, "image-name", 1, 2, 3));
         assertThat(createServiceCaptor.getAllValues())
                 .isEqualTo(List.of(TEST_NAMESPACE, testService));
     }

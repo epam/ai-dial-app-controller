@@ -3,6 +3,7 @@ package com.epam.aidial.service;
 
 import com.epam.aidial.config.AppConfiguration;
 import com.epam.aidial.config.DockerAuthScheme;
+import com.epam.aidial.kubernetes.knative.V1RevisionTemplateSpec;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import com.epam.aidial.util.mapping.ListMapper;
 import com.epam.aidial.util.mapping.MappingChain;
@@ -10,6 +11,7 @@ import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1EnvFromSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1SecretEnvSource;
@@ -18,12 +20,14 @@ import io.kubernetes.client.openapi.models.V1VolumeMount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.epam.aidial.util.NamingUtils.appName;
 import static com.epam.aidial.util.NamingUtils.buildJobName;
@@ -45,6 +49,7 @@ import static com.epam.aidial.util.mapping.Mappers.SECRET_METADATA_FIELD;
 import static com.epam.aidial.util.mapping.Mappers.SERVICE_METADATA_FIELD;
 import static com.epam.aidial.util.mapping.Mappers.SERVICE_SPEC_FIELD;
 import static com.epam.aidial.util.mapping.Mappers.SERVICE_TEMPLATE_FIELD;
+import static com.epam.aidial.util.mapping.Mappers.SERVICE_TEMPLATE_METADATA_FIELD;
 import static com.epam.aidial.util.mapping.Mappers.SERVICE_TEMPLATE_SPEC_FIELD;
 import static com.epam.aidial.util.mapping.Mappers.TEMPLATE_CONTAINERS_FIELD;
 import static com.epam.aidial.util.mapping.Mappers.VOLUME_MOUNT_PATH;
@@ -144,19 +149,39 @@ public class ConfigService {
         return config.data();
     }
 
-    public V1Service appServiceConfig(String name, Map<String, String> env) {
+    public V1Service appServiceConfig(
+            String name,
+            Map<String, String> env,
+            @Nullable String image,
+            @Nullable Integer initScale,
+            @Nullable Integer minScale,
+            @Nullable Integer maxScale) {
         MappingChain<V1Service> config = new MappingChain<>(this.appconfig.cloneServiceConfig());
         config.get(SERVICE_METADATA_FIELD)
                 .data()
                 .setName(appName(name));
-        MappingChain<V1Container> container = config.get(SERVICE_SPEC_FIELD)
-                .get(SERVICE_TEMPLATE_FIELD)
+        MappingChain<V1RevisionTemplateSpec> template = config.get(SERVICE_SPEC_FIELD)
+                .get(SERVICE_TEMPLATE_FIELD);
+
+        V1ObjectMeta templateMetadata = template.get(SERVICE_TEMPLATE_METADATA_FIELD)
+                .data();
+        if (initScale != null) {
+            templateMetadata.putAnnotationsItem("autoscaling.knative.dev/initial-scale", String.valueOf(initScale));
+        }
+        if (minScale != null) {
+            templateMetadata.putAnnotationsItem("autoscaling.knative.dev/min-scale", String.valueOf(minScale));
+        }
+        if (maxScale != null) {
+            templateMetadata.putAnnotationsItem("autoscaling.knative.dev/max-scale", String.valueOf(maxScale));
+        }
+
+        MappingChain<V1Container> container = template
                 .get(SERVICE_TEMPLATE_SPEC_FIELD)
                 .getList(TEMPLATE_CONTAINERS_FIELD, CONTAINER_NAME)
                 .get(serviceContainer);
 
         container.data()
-                .setImage(registryService.fullImageName(name));
+                .setImage(Objects.requireNonNullElse(image, registryService.fullImageName(name)));
         ListMapper<V1EnvVar> containerEnv = container.getList(CONTAINER_ENV_FIELD, ENV_VAR_NAME);
 
         env.forEach((key, value) -> containerEnv.get(key)
