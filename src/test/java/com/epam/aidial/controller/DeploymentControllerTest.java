@@ -55,7 +55,11 @@ class DeploymentControllerTest {
         // Arrange
         when(deployService.deploy(
                 (String) deployCaptor.capture(),
-                (Map<String, String>) deployCaptor.capture()))
+                (Map<String, String>) deployCaptor.capture(),
+                (String) deployCaptor.capture(),
+                (Integer) deployCaptor.capture(),
+                (Integer) deployCaptor.capture(),
+                (Integer) deployCaptor.capture()))
                 .thenReturn(Mono.just(TEST_URL));
         CreateDeploymentResponseDto response = new CreateDeploymentResponseDto(TEST_URL);
         ServerSentEvent<Object> result = SseUtils.result(response);
@@ -67,7 +71,7 @@ class DeploymentControllerTest {
         // Act
         Flux<CreateDeploymentResponseDto> actual = webTestClient.post()
                 .uri("/v1/deployment/" + TEST_NAME)
-                .body(BodyInserters.fromValue(new CreateDeploymentRequestDto(env)))
+                .body(BodyInserters.fromValue(new CreateDeploymentRequestDto(env, "image-name", 1, 2, 3)))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -83,7 +87,7 @@ class DeploymentControllerTest {
                 .expectNext(result);
 
         assertThat(deployCaptor.getAllValues())
-                .isEqualTo(List.of(TEST_NAME, env));
+                .isEqualTo(List.of(TEST_NAME, env, "image-name", 1, 2, 3));
     }
 
     @Test
