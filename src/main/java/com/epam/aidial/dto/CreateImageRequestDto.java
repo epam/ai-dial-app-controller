@@ -1,4 +1,8 @@
 package com.epam.aidial.dto;
 
-public record CreateImageRequestDto(String sources, String runtime) {
+import org.jetbrains.annotations.Nullable;
+
+public record CreateImageRequestDto(
+        String sources,
+        @Nullable String runtime) {
 }

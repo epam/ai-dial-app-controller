@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public record CreateDeploymentRequestDto(
-        Map<String, String> env,
+        @Nullable Map<String, String> env,
         @Nullable String image,
         @Nullable Integer initialScale,
         @Nullable Integer minScale,
