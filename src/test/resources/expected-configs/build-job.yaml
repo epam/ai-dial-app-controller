@@ -14,7 +14,7 @@ spec:
           - --destination=test-docker-registry/app-test-name:latest
           - --build-arg=BASE_IMAGE=python:3.11-slim
           image: test-builder-image
-          name: builder
+          name: builder-container
           volumeMounts:
             - mountPath: /sources
               name: volume
@@ -46,7 +46,7 @@ spec:
                 name: app-ctrl-dial-auth-test-name
           image: test-template-image
           imagePullPolicy: Always
-          name: template
+          name: template-container
           securityContext:
             allowPrivilegeEscalation: false
             runAsUser: 1001

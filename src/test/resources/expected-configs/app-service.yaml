@@ -19,7 +19,7 @@ spec:
               value: test-env-value
           image: test-docker-registry/app-test-name:latest
           imagePullPolicy: Always
-          name: test-container
+          name: app-container
           resources:
             requests:
               cpu: 500m
