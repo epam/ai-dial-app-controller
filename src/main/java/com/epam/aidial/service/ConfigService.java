@@ -59,13 +59,13 @@ public class ConfigService {
     private final RegistryService registryService;
     private final AppConfiguration appconfig;
 
-    @Value("${app.template-container}")
+    @Value("${app.template-container.name}")
     private final String pullerContainer;
 
-    @Value("${app.builder-container}")
+    @Value("${app.builder-container.name}")
     private final String builderContainer;
 
-    @Value("${app.service-container}")
+    @Value("${app.service-container.name}")
     private final String serviceContainer;
 
     @Value("${app.docker-config-path}")

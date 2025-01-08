@@ -24,7 +24,7 @@ public class DeployService {
     @Value("${app.deploy-namespace}")
     private final String namespace;
 
-    @Value("${app.service-container}")
+    @Value("${app.service-container.name}")
     private final String serviceContainer;
 
     @Value("${app.service-setup-timeout-sec}")

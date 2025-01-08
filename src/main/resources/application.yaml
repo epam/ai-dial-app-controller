@@ -20,9 +20,53 @@ app:
   heartbeat-period-sec: 30
   max-error-log-lines: 20
   max-error-log-chars: 1000
-  template-container: template
-  builder-container: builder
-  service-container: app-container
+  template-container: &template-container
+    name: template-container
+    image: ${app.template-image}
+    imagePullPolicy: Always
+    env:
+      - name: DIAL_BASE_URL
+        value: ${app.dial-base-url}
+      - name: ALLOWED_PACKAGES
+        value: "${app.allowed-python-packages} ${app.additional-allowed-python-packages}"
+    volumeMounts:
+      - name: volume
+        subPath: sources
+        mountPath: /sources
+      - name: volume
+        subPath: templates
+        mountPath: /templates
+    securityContext:
+      runAsUser: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+  builder-container: &builder-container
+    name: builder-container
+    image: ${app.builder-image}
+    args:
+      - "--context=/sources"
+      - "--dockerfile=/templates/Dockerfile"
+    volumeMounts:
+      - name: volume
+        subPath: sources
+        mountPath: /sources
+        readOnly: true
+      - name: volume
+        subPath: templates
+        mountPath: /templates
+        readOnly: true
+  service-container: &service-container
+    name: app-container
+    imagePullPolicy: Always
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1G"
+        ephemeral-storage: "500M"
+      limits:
+        cpu: "1000m"
+        memory: "4G"
+        ephemeral-storage: "1G"
   allowed-python-packages: |
     aidial-sdk
     anthropic
@@ -83,17 +127,7 @@ app:
           containerConcurrency: 50
           automountServiceAccountToken: false
           containers:
-            - name: ${app.service-container}
-              imagePullPolicy: Always
-              resources:
-                requests:
-                  cpu: "500m"
-                  memory: "1G"
-                  ephemeral-storage: "500M"
-                limits:
-                  cpu: "1000m"
-                  memory: "4G"
-                  ephemeral-storage: "1G"
+            - <<: *service-container
   job-config:
     apiVersion: batch/v1
     kind: Job
@@ -103,40 +137,9 @@ app:
         spec:
           automountServiceAccountToken: false
           initContainers:
-            - name: ${app.template-container}
-              image: ${app.template-image}
-              imagePullPolicy: Always
-              env:
-                - name: DIAL_BASE_URL
-                  value: ${app.dial-base-url}
-                - name: ALLOWED_PACKAGES
-                  value: "${app.allowed-python-packages} ${app.additional-allowed-python-packages}"
-              volumeMounts:
-                - name: volume
-                  subPath: sources
-                  mountPath: /sources
-                - name: volume
-                  subPath: templates
-                  mountPath: /templates
-              securityContext:
-                runAsUser: 1001
-                runAsNonRoot: true
-                allowPrivilegeEscalation: false
+            - <<: *template-container
           containers:
-            - name: ${app.builder-container}
-              image: ${app.builder-image}
-              args:
-                - "--context=/sources"
-                - "--dockerfile=/templates/Dockerfile"
-              volumeMounts:
-                - name: volume
-                  subPath: sources
-                  mountPath: /sources
-                  readOnly: true
-                - name: volume
-                  subPath: templates
-                  mountPath: /templates
-                  readOnly: true
+            - <<: *builder-container
           restartPolicy: Never
           volumes:
             - name: volume
