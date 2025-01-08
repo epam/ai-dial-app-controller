@@ -14,10 +14,7 @@ spec:
       containerConcurrency: 50
       automountServiceAccountToken: false
       containers:
-        - env:
-            - name: test-env-name
-              value: test-env-value
-          image: test-docker-registry/app-test-name:latest
+        - image: test-docker-registry/app-test-name:latest
           imagePullPolicy: Always
           name: app-container
           resources:
