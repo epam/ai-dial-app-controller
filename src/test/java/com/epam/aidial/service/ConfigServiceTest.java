@@ -64,7 +64,7 @@ class ConfigServiceTest {
         // Act
         V1Service actual = configService.appServiceConfig(
                 TEST_NAME,
-                Map.of("test-env-name", "test-env-value"),
+                Map.of(),
                 null,
                 null,
                 null,

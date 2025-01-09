@@ -20,7 +20,7 @@ spec:
               value: test-env-value
           image: image-name
           imagePullPolicy: Always
-          name: test-container
+          name: app-container
           resources:
             requests:
               cpu: 500m
