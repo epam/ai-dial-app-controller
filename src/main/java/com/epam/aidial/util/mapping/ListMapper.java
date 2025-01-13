@@ -22,6 +22,10 @@ public class ListMapper<T> {
     }
 
     public MappingChain<T> get(String name) {
+        return getOrDefault(name, itemFactory);
+    }
+
+    public MappingChain<T> getOrDefault(String name, Supplier<T> itemFactory) {
         return new MappingChain<>(map.computeIfAbsent(name, n -> {
             T newItem = itemFactory.get();
             nameSetter.accept(newItem, n);

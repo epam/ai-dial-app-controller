@@ -64,15 +64,6 @@ public class ConfigService {
     private final RegistryService registryService;
     private final AppConfiguration appconfig;
 
-    @Value("${app.template-container.name}")
-    private final String pullerContainer;
-
-    @Value("${app.builder-container.name}")
-    private final String builderContainer;
-
-    @Value("${app.service-container.name}")
-    private final String serviceContainer;
-
     @Value("${app.docker-config-path}")
     private final String dockerConfigPath;
 
@@ -113,9 +104,9 @@ public class ConfigService {
         MappingChain<V1PodSpec> podSpec = config.get(JOB_SPEC_FIELD)
                 .get(JOB_TEMPLATE_FIELD)
                 .get(JOB_TEMPLATE_SPEC_FIELD);
-        MappingChain<V1Container> puller = podSpec.getList(POD_INIT_CONTAINERS_FIELD, CONTAINER_NAME)
-                .get(pullerContainer);
-        ListMapper<V1EnvVar> pullerEnvs = puller.getList(CONTAINER_ENV_FIELD, ENV_VAR_NAME);
+        MappingChain<V1Container> template = podSpec.getList(POD_INIT_CONTAINERS_FIELD, CONTAINER_NAME)
+                .getOrDefault(appconfig.getTemplateContainer().getName(), appconfig::cloneTemplateContainer);
+        ListMapper<V1EnvVar> pullerEnvs = template.getList(CONTAINER_ENV_FIELD, ENV_VAR_NAME);
         pullerEnvs.get("SOURCES")
                 .data()
                 .setValue(sources);
@@ -123,11 +114,11 @@ public class ConfigService {
                 .data()
                 .setValue(runtimeConfig.getProfile());
         String secretName = dialAuthSecretName(name);
-        puller.get(CONTAINER_ENV_FROM_FIELD)
+        template.get(CONTAINER_ENV_FROM_FIELD)
                 .data()
                 .add(new V1EnvFromSource().secretRef(new V1SecretEnvSource().name(secretName)));
         MappingChain<V1Container> builder = podSpec.getList(POD_CONTAINERS_FIELD, CONTAINER_NAME)
-                .get(builderContainer);
+                .getOrDefault(appconfig.getBuilderContainer().getName(), appconfig::cloneBuilderContainer);
         builder.get(CONTAINER_ARGS_FIELD)
                 .data()
                 .addAll(List.of(
@@ -178,7 +169,7 @@ public class ConfigService {
         MappingChain<V1Container> container = template
                 .get(SERVICE_TEMPLATE_SPEC_FIELD)
                 .getList(TEMPLATE_CONTAINERS_FIELD, CONTAINER_NAME)
-                .get(serviceContainer);
+                .getOrDefault(appconfig.getServiceContainer().getName(), appconfig::cloneServiceContainer);
 
         container.data()
                 .setImage(Objects.requireNonNullElse(image, registryService.fullImageName(name)));

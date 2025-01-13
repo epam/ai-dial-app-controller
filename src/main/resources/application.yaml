@@ -20,7 +20,7 @@ app:
   heartbeat-period-sec: 30
   max-error-log-lines: 20
   max-error-log-chars: 1000
-  template-container: &template-container
+  template-container:
     name: template-container
     image: ${app.template-image}
     imagePullPolicy: Always
@@ -40,7 +40,7 @@ app:
       runAsUser: 1001
       runAsNonRoot: true
       allowPrivilegeEscalation: false
-  builder-container: &builder-container
+  builder-container:
     name: builder-container
     image: ${app.builder-image}
     args:
@@ -55,7 +55,7 @@ app:
         subPath: templates
         mountPath: /templates
         readOnly: true
-  service-container: &service-container
+  service-container:
     name: app-container
     imagePullPolicy: Always
     resources:
@@ -126,8 +126,6 @@ app:
           idleTimeoutSeconds: 300
           containerConcurrency: 50
           automountServiceAccountToken: false
-          containers:
-            - <<: *service-container
   job-config:
     apiVersion: batch/v1
     kind: Job
@@ -136,10 +134,6 @@ app:
       template:
         spec:
           automountServiceAccountToken: false
-          initContainers:
-            - <<: *template-container
-          containers:
-            - <<: *builder-container
           restartPolicy: Never
           volumes:
             - name: volume

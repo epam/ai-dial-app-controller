@@ -1,6 +1,7 @@
 package com.epam.aidial.config;
 
 import com.epam.aidial.kubernetes.knative.V1Service;
+import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.util.Yaml;
@@ -28,6 +29,18 @@ public class AppConfiguration {
     private String serviceConfigString;
 
     @Getter
+    private V1Container templateContainer;
+    private String templateContainerString;
+
+    @Getter
+    private V1Container builderContainer;
+    private String builderContainerString;
+
+    @Getter
+    private V1Container serviceContainer;
+    private String serviceContainerString;
+
+    @Getter
     @Setter
     private Map<String, RuntimeConfiguration> runtimes;
 
@@ -46,6 +59,21 @@ public class AppConfiguration {
         this.serviceConfigString = Yaml.dump(serviceConfig);
     }
 
+    public void setTemplateContainer(V1Container container) {
+        this.templateContainer = container;
+        this.templateContainerString = Yaml.dump(container);
+    }
+
+    public void setBuilderContainer(V1Container container) {
+        this.builderContainer = container;
+        this.builderContainerString = Yaml.dump(container);
+    }
+
+    public void setServiceContainer(V1Container container) {
+        this.serviceContainer = container;
+        this.serviceContainerString = Yaml.dump(container);
+    }
+
     public V1Secret cloneSecretConfig() {
         return Yaml.loadAs(secretConfigString, V1Secret.class);
     }
@@ -56,6 +84,18 @@ public class AppConfiguration {
 
     public V1Service cloneServiceConfig() {
         return Yaml.loadAs(serviceConfigString, V1Service.class);
+    }
+
+    public V1Container cloneTemplateContainer() {
+        return Yaml.loadAs(templateContainerString, V1Container.class);
+    }
+
+    public V1Container cloneBuilderContainer() {
+        return Yaml.loadAs(builderContainerString, V1Container.class);
+    }
+
+    public V1Container cloneServiceContainer() {
+        return Yaml.loadAs(serviceContainerString, V1Container.class);
     }
 
     @Data
