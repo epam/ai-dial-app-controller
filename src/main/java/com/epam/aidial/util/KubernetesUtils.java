@@ -78,7 +78,10 @@ public class KubernetesUtils {
                     }
 
                     if ("False".equals(condition.getStatus())) {
-                        throw new IllegalStateException("Failed to setup service %s: %s".formatted(name, condition.getMessage()));
+                        // Cannot throw an exception here because in some cases it recovers,
+                        // and it's not clear how to differentiate those.
+                        log.warn("Failed to setup service %s: %s".formatted(name, condition.getMessage()));
+                        return null;
                     }
                 }
 
