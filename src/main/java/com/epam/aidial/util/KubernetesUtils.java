@@ -77,7 +77,7 @@ public class KubernetesUtils {
                         return status.getUrl();
                     }
 
-                    if ("False".equals(condition.getStatus())) {
+                    if ("False".equals(condition.getStatus()) && "RevisionFailed".equals(condition.getReason())) {
                         throw new IllegalStateException("Failed to setup service %s: %s".formatted(name, condition.getMessage()));
                     }
                 }
