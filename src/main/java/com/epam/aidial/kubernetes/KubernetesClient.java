@@ -34,6 +34,7 @@ public class KubernetesClient {
     };
     private static final TypeToken<Watch.Response<V1Service>> SERVICE_TYPE_TOKEN = new TypeToken<>() {
     };
+    private static final String FOREGROUND_POLICY = "Foreground";
     private static final String NAME_SELECTOR_PREFIX = "metadata.name=";
 
     private final ApiClient apiClient;
@@ -266,6 +267,7 @@ public class KubernetesClient {
             log.info("Deleting service {}", name);
             try {
                 customObjectsApi.deleteNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, name)
+                        .propagationPolicy(FOREGROUND_POLICY)
                         .gracePeriodSeconds(0)
                         .executeAsync(new NoProgressApiCallback<>() {
                             @Override
@@ -282,12 +284,10 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        })).flatMap(deleted -> getKnativeServicePods(namespace, name).flatMapIterable(V1PodList::getItems)
-                .flatMap(pod -> deletePod(namespace, pod.getMetadata().getName()))
-                .reduce(deleted, (a, b) -> a || b));
+        }));
     }
 
-    private Mono<Boolean> deletePod(String namespace, String name) {
+    public Mono<Boolean> deletePod(String namespace, String name) {
         return handleMissing(Mono.create(sink -> {
             CoreV1Api batchV1Api = new CoreV1Api(apiClient);
             log.info("Deleting pod {}", name);

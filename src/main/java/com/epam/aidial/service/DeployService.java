@@ -45,8 +45,15 @@ public class DeployService {
 
     public Mono<Boolean> undeploy(String name) {
         KubernetesClient kubernetesClient = kubernetesService.deployClient();
+        String appName = appName(name);
         return kubernetesClient.deleteKnativeService(
-                namespace, appName(name), kubernetesService.getKnativeServiceVersion());
+                        namespace, appName, kubernetesService.getKnativeServiceVersion())
+                // Knative has a default termination grace period and ignores any configured value.
+                // Therefore, an extra step is performed to delete pods instantly.
+                .flatMap(deleted -> kubernetesClient.getKnativeServicePods(namespace, appName)
+                        .flatMapIterable(V1PodList::getItems)
+                        .flatMap(pod -> kubernetesClient.deletePod(namespace, pod.getMetadata().getName()))
+                        .reduce(deleted, (a, b) -> a || b));
     }
 
     public Mono<List<GetApplicationLogsResponseDto.LogEntry>> logs(String name) {
