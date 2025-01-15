@@ -263,6 +263,7 @@ public class KubernetesClient {
             try {
                 customObjectsApi.deleteNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, name)
                         .propagationPolicy(FOREGROUND_POLICY)
+                        .gracePeriodSeconds(0)
                         .executeAsync(new NoProgressApiCallback<>() {
                             @Override
                             public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
