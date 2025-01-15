@@ -10,6 +10,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.CustomObjectsApi;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1Status;
@@ -44,7 +45,7 @@ public class KubernetesClient {
             String name = metadata.getName();
 
             CoreV1Api coreApi = new CoreV1Api(apiClient);
-            log.info("Creating a secret {}", name);
+            log.info("Creating secret {}", name);
             try {
                 coreApi.createNamespacedSecret(namespace, secret)
                         .executeAsync(new NoProgressApiCallback<>() {
@@ -68,7 +69,7 @@ public class KubernetesClient {
     public Mono<Boolean> deleteSecret(String namespace, String name) {
         return handleMissing(Mono.create(sink -> {
             CoreV1Api coreApi = new CoreV1Api(apiClient);
-            log.info("Deleting a secret {}", name);
+            log.info("Deleting secret {}", name);
             try {
                 coreApi.deleteNamespacedSecret(name, namespace)
                         .executeAsync(new NoProgressApiCallback<>() {
@@ -102,7 +103,7 @@ public class KubernetesClient {
                     .buildCall(null);
 
             try (Watch<V1Job> watch = Watch.createWatch(batchApi.getApiClient(), call, JOB_TYPE_TOKEN.getType())) {
-                log.info("Creating a job {}", name);
+                log.info("Creating job {}", name);
                 batchApi.createNamespacedJob(namespace, job)
                         .execute();
 
@@ -157,7 +158,11 @@ public class KubernetesClient {
 
                             @Override
                             public void onSuccess(V1PodList state, int i, Map<String, List<String>> map) {
-                                log.info("Received pod list with label {}", label);
+                                if (state.getItems().isEmpty()) {
+                                    log.info("No pods with label {}", label);
+                                } else {
+                                    log.info("Received a pod list for label {}", label);
+                                }
                                 sink.success(state);
                             }
                         });
@@ -195,7 +200,7 @@ public class KubernetesClient {
     public Mono<Boolean> deleteJob(String namespace, String name) {
         return handleMissing(Mono.create(sink -> {
             BatchV1Api batchV1Api = new BatchV1Api(apiClient);
-            log.info("Deleting a job {}", name);
+            log.info("Deleting job {}", name);
             try {
                 batchV1Api.deleteNamespacedJob(name, namespace)
                         .executeAsync(new NoProgressApiCallback<>() {
@@ -230,7 +235,7 @@ public class KubernetesClient {
                     .buildCall(null);
             try (Watch<V1Service> watch = Watch.createWatch(
                     customObjectsApi.getApiClient(), call, SERVICE_TYPE_TOKEN.getType())) {
-                log.info("Creating a service {}", name);
+                log.info("Creating service {}", name);
                 customObjectsApi.createNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, service)
                         .execute();
 
@@ -259,7 +264,7 @@ public class KubernetesClient {
             ServiceVersion version = ServiceVersion.parse(serviceVersion);
 
             CustomObjectsApi customObjectsApi = new CustomObjectsApi(apiClient);
-            log.info("Deleting a service {}", name);
+            log.info("Deleting service {}", name);
             try {
                 customObjectsApi.deleteNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, name)
                         .propagationPolicy(FOREGROUND_POLICY)
@@ -273,6 +278,31 @@ public class KubernetesClient {
                             @Override
                             public void onSuccess(Object state, int i, Map<String, List<String>> map) {
                                 log.info("Service {} has been deleted", name);
+                                sink.success();
+                            }
+                        });
+            } catch (ApiException e) {
+                sink.error(e);
+            }
+        }));
+    }
+
+    public Mono<Boolean> deletePod(String namespace, String name) {
+        return handleMissing(Mono.create(sink -> {
+            CoreV1Api batchV1Api = new CoreV1Api(apiClient);
+            log.info("Deleting pod {}", name);
+            try {
+                batchV1Api.deleteNamespacedPod(name, namespace)
+                        .gracePeriodSeconds(0)
+                        .executeAsync(new NoProgressApiCallback<>() {
+                            @Override
+                            public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
+                                sink.error(e);
+                            }
+
+                            @Override
+                            public void onSuccess(V1Pod pod, int i, Map<String, List<String>> map) {
+                                log.info("Pod {} has been deleted", name);
                                 sink.success();
                             }
                         });

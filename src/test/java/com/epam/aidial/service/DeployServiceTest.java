@@ -3,6 +3,8 @@ package com.epam.aidial.service;
 import com.epam.aidial.kubernetes.KubernetesClient;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -33,6 +35,8 @@ class DeployServiceTest {
     private static final String TEST_NAME = "test-name";
     private static final String TEST_URL = "url";
     private static final String TEST_SERVICE_VERSION = "test-service-version";
+    private static final String TEST_APP = "app-ctrl-app-test-name";
+    private static final String TEST_POD = "test-pod";
 
     static final String TEST_NAMESPACE = "test-namespace";
 
@@ -56,6 +60,12 @@ class DeployServiceTest {
 
     @Captor
     private ArgumentCaptor<String> deleteServiceCaptor;
+
+    @Captor
+    private ArgumentCaptor<String> getServicePodsCaptor;
+
+    @Captor
+    private ArgumentCaptor<String> deletePodCaptor;
 
     @Test
     @SuppressWarnings("unchecked")
@@ -102,6 +112,18 @@ class DeployServiceTest {
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture()))
                 .thenReturn(Mono.just(Boolean.TRUE));
+        V1PodList podList = new V1PodList()
+                .addItemsItem(new V1Pod()
+                        .metadata(new V1ObjectMeta()
+                                .name(TEST_POD)));
+        when(kubernetesClient.getKnativeServicePods(
+                getServicePodsCaptor.capture(),
+                getServicePodsCaptor.capture()))
+                .thenReturn(Mono.just(podList));
+        when(kubernetesClient.deletePod(
+                deletePodCaptor.capture(),
+                deletePodCaptor.capture()))
+                .thenReturn(Mono.just(Boolean.TRUE));
 
         // Act
         Mono<Boolean> actual = deployService.undeploy(TEST_NAME);
@@ -112,7 +134,11 @@ class DeployServiceTest {
                 .verifyComplete();
 
         assertThat(deleteServiceCaptor.getAllValues())
-                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-app-test-name", TEST_SERVICE_VERSION));
+                .isEqualTo(List.of(TEST_NAMESPACE, TEST_APP, TEST_SERVICE_VERSION));
+        assertThat(getServicePodsCaptor.getAllValues())
+                .isEqualTo(List.of(TEST_NAMESPACE, TEST_APP));
+        assertThat(deletePodCaptor.getAllValues())
+                .isEqualTo(List.of(TEST_NAMESPACE, TEST_POD));
     }
 
     @Test
@@ -125,6 +151,10 @@ class DeployServiceTest {
                 deleteServiceCaptor.capture(),
                 deleteServiceCaptor.capture()))
                 .thenReturn(Mono.just(Boolean.FALSE));
+        when(kubernetesClient.getKnativeServicePods(
+                getServicePodsCaptor.capture(),
+                getServicePodsCaptor.capture()))
+                .thenReturn(Mono.just(new V1PodList()));
 
         // Act
         Mono<Boolean> actual = deployService.undeploy(TEST_NAME);
@@ -135,6 +165,8 @@ class DeployServiceTest {
                 .verifyComplete();
 
         assertThat(deleteServiceCaptor.getAllValues())
-                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-app-test-name", TEST_SERVICE_VERSION));
+                .isEqualTo(List.of(TEST_NAMESPACE, TEST_APP, TEST_SERVICE_VERSION));
+        assertThat(getServicePodsCaptor.getAllValues())
+                .isEqualTo(List.of(TEST_NAMESPACE, TEST_APP));
     }
 }
