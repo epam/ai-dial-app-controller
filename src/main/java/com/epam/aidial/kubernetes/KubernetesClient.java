@@ -34,6 +34,7 @@ public class KubernetesClient {
     };
     private static final TypeToken<Watch.Response<V1Service>> SERVICE_TYPE_TOKEN = new TypeToken<>() {
     };
+    private static final String BACKGROUND_POLICY = "Background";
     private static final String FOREGROUND_POLICY = "Foreground";
     private static final String NAME_SELECTOR_PREFIX = "metadata.name=";
 
@@ -203,6 +204,8 @@ public class KubernetesClient {
             log.info("Deleting job {}", name);
             try {
                 batchV1Api.deleteNamespacedJob(name, namespace)
+                        .propagationPolicy(BACKGROUND_POLICY)
+                        .gracePeriodSeconds(0)
                         .executeAsync(new NoProgressApiCallback<>() {
                             @Override
                             public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
