@@ -226,6 +226,7 @@ public class KubernetesClient {
 
     public Mono<String> createKnativeService(String namespace, V1Service service, int serviceSetupTimeoutSec) {
         // Currently there is no asynchronous Watch api
+        long startTime = System.currentTimeMillis();
         return Mono.fromCallable(() -> {
             String name = service.getMetadata().getName();
             ServiceVersion version = ServiceVersion.parse(service.getApiVersion());
@@ -248,7 +249,7 @@ public class KubernetesClient {
                         Validate.isTrue(name.equals(serviceState.getMetadata().getName()));
                         String url = KubernetesUtils.extractServiceUrl(serviceState);
                         if (url != null) {
-                            log.info("Service {} has been set up", name);
+                            log.info("Service {} has been set up: {} ms", name, System.currentTimeMillis() - startTime);
                             return url;
                         }
                     } else {
