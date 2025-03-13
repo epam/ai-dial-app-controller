@@ -47,14 +47,16 @@ public class BuildService {
                             .flatMap(error -> Mono.error(new RuntimeException(error)))
                             .then(Mono.error(e));
                 })
+                .then(kubernetesClient.deleteSecret(namespace, dialAuthSecretName(params.name)))
+                .then(kubernetesClient.deleteJob(namespace, buildJobName(params.name)))
                 .thenReturn(registryService.fullImageName(params.name));
     }
 
     public Mono<Boolean> clean(String name) {
         KubernetesClient kubernetesClient = kubernetesService.buildClient();
-        return Mono.just(Boolean.FALSE)
-                .flatMap(deleted -> KubernetesUtils.skipIfNotFound(kubernetesClient.deleteJob(namespace, buildJobName(name)), deleted))
-                .flatMap(deleted -> KubernetesUtils.skipIfNotFound(kubernetesClient.deleteSecret(namespace, dialAuthSecretName(name)), deleted))
+        return kubernetesClient.deleteJob(namespace, buildJobName(name))
+                .flatMap(deleted -> kubernetesClient.deleteSecret(namespace, dialAuthSecretName(name))
+                        .map(d -> d || deleted))
                 .flatMap(deleted -> registryService.getDigest(name)
                         .flatMap(digest -> registryService.deleteManifest(name, digest))
                         .map(d -> d || deleted)

@@ -7,14 +7,18 @@ spec:
     metadata:
       annotations:
         autoscaling.knative.dev/window: '300s'
-        autoscaling.knative.dev/initial-scale: '0'
+        autoscaling.knative.dev/initial-scale: '1'
         autoscaling.knative.dev/max-scale: '3'
+        autoscaling.knative.dev/min-scale: '2'
     spec:
       idleTimeoutSeconds: 300
       containerConcurrency: 50
       automountServiceAccountToken: false
       containers:
-        - image: test-docker-registry/app-test-name:latest
+        - env:
+            - name: test-env-name
+              value: test-env-value
+          image: image-name
           imagePullPolicy: Always
           name: app-container
           resources:

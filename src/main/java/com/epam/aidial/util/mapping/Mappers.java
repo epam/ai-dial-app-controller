@@ -97,6 +97,11 @@ public class Mappers {
             V1ServiceSpec::getTemplate,
             V1ServiceSpec::setTemplate);
 
+    public static final FieldMapper<V1RevisionTemplateSpec, V1ObjectMeta> SERVICE_TEMPLATE_METADATA_FIELD = new FieldMapper<>(
+            V1ObjectMeta::new,
+            V1RevisionTemplateSpec::getMetadata,
+            V1RevisionTemplateSpec::setMetadata);
+
     public static final FieldMapper<V1RevisionTemplateSpec, V1RevisionSpec> SERVICE_TEMPLATE_SPEC_FIELD = new FieldMapper<>(
             V1RevisionSpec::new,
             V1RevisionTemplateSpec::getSpec,

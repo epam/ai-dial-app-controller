@@ -2,11 +2,11 @@ package com.epam.aidial.service;
 
 import com.epam.aidial.dto.GetApplicationLogsResponseDto;
 import com.epam.aidial.kubernetes.KubernetesClient;
-import com.epam.aidial.util.KubernetesUtils;
 import io.kubernetes.client.openapi.models.V1ContainerStatus;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodStatus;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -25,24 +25,35 @@ public class DeployService {
     @Value("${app.deploy-namespace}")
     private final String namespace;
 
-    @Value("${app.service-container}")
+    @Value("${app.service-container.name}")
     private final String serviceContainer;
 
     @Value("${app.service-setup-timeout-sec}")
     private final int serviceSetupTimeoutSec;
 
-    public Mono<String> deploy(String name, Map<String, String> env) {
+    public Mono<String> deploy(
+            String name,
+            Map<String, String> env,
+            @Nullable String image,
+            @Nullable Integer initialScale,
+            @Nullable Integer minScale,
+            @Nullable Integer maxScale) {
         KubernetesClient kubernetesClient = kubernetesService.deployClient();
-        return Mono.fromCallable(() -> templateService.appServiceConfig(name, env))
+        return Mono.fromCallable(() -> templateService.appServiceConfig(name, env, image, initialScale, minScale, maxScale))
                 .flatMap(service -> kubernetesClient.createKnativeService(namespace, service, serviceSetupTimeoutSec));
     }
 
     public Mono<Boolean> undeploy(String name) {
         KubernetesClient kubernetesClient = kubernetesService.deployClient();
-        return KubernetesUtils.skipIfNotFound(
-                kubernetesClient.deleteKnativeService(
-                        namespace, appName(name), kubernetesService.getKnativeServiceVersion()),
-                Boolean.FALSE);
+        String appName = appName(name);
+        return kubernetesClient.deleteKnativeService(
+                        namespace, appName, kubernetesService.getKnativeServiceVersion())
+                // Knative has a default termination grace period and ignores any configured value.
+                // Therefore, an extra step is performed to delete pods instantly.
+                .flatMap(deleted -> kubernetesClient.getKnativeServicePods(namespace, appName)
+                        .flatMapIterable(V1PodList::getItems)
+                        .flatMap(pod -> kubernetesClient.deletePod(namespace, pod.getMetadata().getName()))
+                        .reduce(deleted, (a, b) -> a || b));
     }
 
     public Mono<List<GetApplicationLogsResponseDto.LogEntry>> logs(String name) {

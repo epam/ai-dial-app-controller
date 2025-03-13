@@ -10,6 +10,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.CustomObjectsApi;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1Status;
@@ -33,6 +34,7 @@ public class KubernetesClient {
     };
     private static final TypeToken<Watch.Response<V1Service>> SERVICE_TYPE_TOKEN = new TypeToken<>() {
     };
+    private static final String BACKGROUND_POLICY = "Background";
     private static final String FOREGROUND_POLICY = "Foreground";
     private static final String NAME_SELECTOR_PREFIX = "metadata.name=";
 
@@ -44,7 +46,7 @@ public class KubernetesClient {
             String name = metadata.getName();
 
             CoreV1Api coreApi = new CoreV1Api(apiClient);
-            log.info("Creating a secret {}", name);
+            log.info("Creating secret {}", name);
             try {
                 coreApi.createNamespacedSecret(namespace, secret)
                         .executeAsync(new NoProgressApiCallback<>() {
@@ -65,10 +67,10 @@ public class KubernetesClient {
         });
     }
 
-    public Mono<Void> deleteSecret(String namespace, String name) {
-        return Mono.create(sink -> {
+    public Mono<Boolean> deleteSecret(String namespace, String name) {
+        return handleMissing(Mono.create(sink -> {
             CoreV1Api coreApi = new CoreV1Api(apiClient);
-            log.info("Deleting a secret {}", name);
+            log.info("Deleting secret {}", name);
             try {
                 coreApi.deleteNamespacedSecret(name, namespace)
                         .executeAsync(new NoProgressApiCallback<>() {
@@ -86,7 +88,7 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        });
+        }));
     }
 
     public Mono<Void> createJob(String namespace, V1Job job, int imageBuildTimeoutSec) {
@@ -102,17 +104,21 @@ public class KubernetesClient {
                     .buildCall(null);
 
             try (Watch<V1Job> watch = Watch.createWatch(batchApi.getApiClient(), call, JOB_TYPE_TOKEN.getType())) {
-                log.info("Creating a job {}", name);
+                log.info("Creating job {}", name);
                 batchApi.createNamespacedJob(namespace, job)
                         .execute();
 
                 log.info("Waiting for job {} to complete", name);
                 for (Watch.Response<V1Job> item : watch) {
                     V1Job jobState = item.object;
-                    if (jobState != null && KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                    if (jobState != null) {
                         Validate.isTrue(name.equals(jobState.getMetadata().getName()));
-                        log.info("Job {} has completed successfully", name);
-                        return null;
+                        if (KubernetesUtils.extractJobCompletionStatus(jobState)) {
+                            log.info("Job {} has completed successfully", name);
+                            return null;
+                        }
+                    } else {
+                        logStatus(item.status);
                     }
                 }
             }
@@ -120,6 +126,14 @@ public class KubernetesClient {
             throw new IllegalStateException("Subscription to job %s events expired".formatted(name));
         })
         .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private static void logStatus(V1Status status) {
+        if (status != null) {
+            log.info("Received status: {}", status.toJson());
+        } else {
+            log.info("Unknown event type received");
+        }
     }
 
     public Mono<V1PodList> getJobPods(String namespace, String name) {
@@ -145,7 +159,11 @@ public class KubernetesClient {
 
                             @Override
                             public void onSuccess(V1PodList state, int i, Map<String, List<String>> map) {
-                                log.info("Received pod list with label {}", label);
+                                if (state.getItems().isEmpty()) {
+                                    log.info("No pods with label {}", label);
+                                } else {
+                                    log.info("Received a pod list for label {}", label);
+                                }
                                 sink.success(state);
                             }
                         });
@@ -180,13 +198,14 @@ public class KubernetesClient {
         });
     }
 
-    public Mono<Void> deleteJob(String namespace, String name) {
-        return Mono.create(sink -> {
+    public Mono<Boolean> deleteJob(String namespace, String name) {
+        return handleMissing(Mono.create(sink -> {
             BatchV1Api batchV1Api = new BatchV1Api(apiClient);
-            log.info("Deleting a job {}", name);
+            log.info("Deleting job {}", name);
             try {
                 batchV1Api.deleteNamespacedJob(name, namespace)
-                        .propagationPolicy(FOREGROUND_POLICY)
+                        .propagationPolicy(BACKGROUND_POLICY)
+                        .gracePeriodSeconds(0)
                         .executeAsync(new NoProgressApiCallback<>() {
                             @Override
                             public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
@@ -202,11 +221,12 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        });
+        }));
     }
 
     public Mono<String> createKnativeService(String namespace, V1Service service, int serviceSetupTimeoutSec) {
         // Currently there is no asynchronous Watch api
+        long startTime = System.currentTimeMillis();
         return Mono.fromCallable(() -> {
             String name = service.getMetadata().getName();
             ServiceVersion version = ServiceVersion.parse(service.getApiVersion());
@@ -219,7 +239,7 @@ public class KubernetesClient {
                     .buildCall(null);
             try (Watch<V1Service> watch = Watch.createWatch(
                     customObjectsApi.getApiClient(), call, SERVICE_TYPE_TOKEN.getType())) {
-                log.info("Creating a service {}", name);
+                log.info("Creating service {}", name);
                 customObjectsApi.createNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, service)
                         .execute();
 
@@ -229,9 +249,11 @@ public class KubernetesClient {
                         Validate.isTrue(name.equals(serviceState.getMetadata().getName()));
                         String url = KubernetesUtils.extractServiceUrl(serviceState);
                         if (url != null) {
-                            log.info("Service {} has been set up", name);
+                            log.info("Service {} has been set up: {} ms", name, System.currentTimeMillis() - startTime);
                             return url;
                         }
+                    } else {
+                        logStatus(item.status);
                     }
                 }
             }
@@ -241,15 +263,16 @@ public class KubernetesClient {
         .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<Void> deleteKnativeService(String namespace, String name, String serviceVersion) {
-        return Mono.create(sink -> {
+    public Mono<Boolean> deleteKnativeService(String namespace, String name, String serviceVersion) {
+        return handleMissing(Mono.create(sink -> {
             ServiceVersion version = ServiceVersion.parse(serviceVersion);
 
             CustomObjectsApi customObjectsApi = new CustomObjectsApi(apiClient);
-            log.info("Deleting a service {}", name);
+            log.info("Deleting service {}", name);
             try {
                 customObjectsApi.deleteNamespacedCustomObject(version.group(), version.version(), namespace, SERVICES, name)
                         .propagationPolicy(FOREGROUND_POLICY)
+                        .gracePeriodSeconds(0)
                         .executeAsync(new NoProgressApiCallback<>() {
                             @Override
                             public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
@@ -265,12 +288,45 @@ public class KubernetesClient {
             } catch (ApiException e) {
                 sink.error(e);
             }
-        });
+        }));
+    }
+
+    public Mono<Boolean> deletePod(String namespace, String name) {
+        return handleMissing(Mono.create(sink -> {
+            CoreV1Api batchV1Api = new CoreV1Api(apiClient);
+            log.info("Deleting pod {}", name);
+            try {
+                batchV1Api.deleteNamespacedPod(name, namespace)
+                        .gracePeriodSeconds(0)
+                        .executeAsync(new NoProgressApiCallback<>() {
+                            @Override
+                            public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
+                                sink.error(e);
+                            }
+
+                            @Override
+                            public void onSuccess(V1Pod pod, int i, Map<String, List<String>> map) {
+                                log.info("Pod {} has been deleted", name);
+                                sink.success();
+                            }
+                        });
+            } catch (ApiException e) {
+                sink.error(e);
+            }
+        }));
     }
 
     public static void addKnativeServiceToModelMap(String serviceVersion) {
         ServiceVersion version = ServiceVersion.parse(serviceVersion);
         ModelMapper.addModelMap(version.group(), version.version(), "Service", SERVICES, true, V1Service.class);
+    }
+
+    private static Mono<Boolean> handleMissing(Mono<Void> operation) {
+        return operation
+                .thenReturn(Boolean.TRUE)
+                .onErrorResume(e -> e instanceof ApiException apiException && apiException.getCode() == 404
+                        ? Mono.just(Boolean.FALSE)
+                        : Mono.error(e));
     }
 
     public record ServiceVersion(String group, String version) {

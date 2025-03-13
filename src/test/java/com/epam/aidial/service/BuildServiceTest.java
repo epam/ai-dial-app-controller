@@ -1,7 +1,6 @@
 package com.epam.aidial.service;
 
 import com.epam.aidial.kubernetes.KubernetesClient;
-import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Secret;
@@ -114,6 +113,14 @@ class BuildServiceTest {
         when(registryService.fullImageName(
                 fullImageNameCaptor.capture()))
                 .thenReturn(TEST_IMAGE);
+        when(kubernetesClient.deleteSecret(
+                deleteSecretCaptor.capture(),
+                deleteSecretCaptor.capture()))
+                .thenReturn(Mono.just(Boolean.TRUE));
+        when(kubernetesClient.deleteJob(
+                deleteJobCaptor.capture(),
+                deleteJobCaptor.capture()))
+                .thenReturn(Mono.just(Boolean.TRUE));
 
         BuildService.BuildParameters buildParameters =
                 new BuildService.BuildParameters(TEST_NAME, TEST_SOURCES, TEST_API_KEY, TEST_JWT, TEST_RUNTIME);
@@ -136,6 +143,10 @@ class BuildServiceTest {
                 .isEqualTo(List.of(TEST_NAMESPACE, TEST_JOB));
         assertThat(fullImageNameCaptor.getValue())
                 .isEqualTo(TEST_NAME);
+        assertThat(deleteSecretCaptor.getAllValues())
+                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-dial-auth-test-name"));
+        assertThat(deleteJobCaptor.getAllValues())
+                .isEqualTo(List.of(TEST_NAMESPACE, "app-ctrl-build-test-name"));
     }
 
     @Test
@@ -145,11 +156,11 @@ class BuildServiceTest {
         when(kubernetesClient.deleteJob(
                 deleteJobCaptor.capture(),
                 deleteJobCaptor.capture()))
-                .thenReturn(Mono.empty());
+                .thenReturn(Mono.just(Boolean.TRUE));
         when(kubernetesClient.deleteSecret(
                 deleteSecretCaptor.capture(),
                 deleteSecretCaptor.capture()))
-                .thenReturn(Mono.empty());
+                .thenReturn(Mono.just(Boolean.TRUE));
         when(registryService.getDigest(
                 getDigestCaptor.capture()))
                 .thenReturn(Mono.just(TEST_DIGEST));
@@ -183,11 +194,11 @@ class BuildServiceTest {
         when(kubernetesClient.deleteJob(
                 deleteJobCaptor.capture(),
                 deleteJobCaptor.capture()))
-                .thenReturn(Mono.error(new ApiException(404, "Not found")));
+                .thenReturn(Mono.just(Boolean.FALSE));
         when(kubernetesClient.deleteSecret(
                 deleteSecretCaptor.capture(),
                 deleteSecretCaptor.capture()))
-                .thenReturn(Mono.error(new ApiException(404, "Not found")));
+                .thenReturn(Mono.just(Boolean.FALSE));
         when(registryService.getDigest(
                 getDigestCaptor.capture()))
                 .thenReturn(Mono.empty());

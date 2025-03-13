@@ -36,7 +36,9 @@ public class DeploymentController {
     public Flux<ServerSentEvent<Object>> create(
             @PathVariable("name") String name,
             @RequestBody CreateDeploymentRequestDto request) {
-        Mono<CreateDeploymentResponseDto> result = deployService.deploy(name, Objects.requireNonNullElse(request.env(), Map.of()))
+        Map<String, String> env = Objects.requireNonNullElse(request.env(), Map.of());
+        Mono<CreateDeploymentResponseDto> result = deployService.deploy(
+                name, env, request.image(), request.initialScale(), request.minScale(), request.maxScale())
                 .doOnError(e -> log.error("Failed to deploy service {}", name, e))
                 .map(CreateDeploymentResponseDto::new);
 

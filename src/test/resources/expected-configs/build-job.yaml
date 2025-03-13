@@ -14,7 +14,7 @@ spec:
           - --destination=test-docker-registry/app-test-name:latest
           - --build-arg=BASE_IMAGE=python:3.11-slim
           image: test-builder-image
-          name: builder
+          name: builder-container
           volumeMounts:
             - mountPath: /sources
               name: volume
@@ -32,7 +32,7 @@ spec:
             - name: DIAL_BASE_URL
               value: test-dial-base-url
             - name: ALLOWED_PACKAGES
-              value: "aidial-sdk\nanthropic\nbeautifulsoup4\nchromadb\ncolorama\nfastapi\n\
+              value: "aidial-sdk\naiohttp\nanthropic\nbeautifulsoup4\nchromadb\ncolorama\nfastapi\n\
             faiss-cpu\nflake8\nflask\nhttpx\ninquirer\nlangchain\nlangchain-community\nlangchain-openai\n\
             langchain-text-splitters\nnumpy\nopenai\npandas\npyright\npython-dotenv\n\
             python-multipart\nprompt-toolkit\npypdf\nrequests\ntiktoken\nuvicorn\n\
@@ -46,7 +46,7 @@ spec:
                 name: app-ctrl-dial-auth-test-name
           image: test-template-image
           imagePullPolicy: Always
-          name: template
+          name: template-container
           securityContext:
             allowPrivilegeEscalation: false
             runAsUser: 1001
