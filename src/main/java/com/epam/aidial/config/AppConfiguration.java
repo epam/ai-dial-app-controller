@@ -3,6 +3,7 @@ package com.epam.aidial.config;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.util.Yaml;
 import lombok.Data;
@@ -43,6 +44,17 @@ public class AppConfiguration {
     @Getter
     @Setter
     private Map<String, RuntimeConfiguration> runtimes;
+
+    @Getter
+    @Setter
+    private io.kubernetes.client.openapi.models.V1Service sessionSvc;
+    @Getter
+    @Setter
+    private V1Pod sessionPod;
+
+    @Getter
+    @Setter
+    private V1Container sessionContainer;
 
     public void setSecretConfig(V1Secret secretConfig) {
         this.secretConfig = secretConfig;
@@ -96,6 +108,21 @@ public class AppConfiguration {
 
     public V1Container cloneServiceContainer() {
         return Yaml.loadAs(serviceContainerString, V1Container.class);
+    }
+
+    public io.kubernetes.client.openapi.models.V1Service cloneSessionSvc() {
+        String yaml = Yaml.dump(sessionSvc);
+        return Yaml.loadAs(yaml, io.kubernetes.client.openapi.models.V1Service.class);
+    }
+
+    public V1Pod cloneSessionPod() {
+        String yaml = Yaml.dump(sessionPod);
+        return Yaml.loadAs(yaml, V1Pod.class);
+    }
+
+    public V1Container cloneSessionContainer() {
+        String yaml = Yaml.dump(sessionContainer);
+        return Yaml.loadAs(yaml, V1Container.class);
     }
 
     @Data

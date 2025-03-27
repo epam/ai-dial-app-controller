@@ -23,6 +23,7 @@ import org.apache.commons.lang3.Validate;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +35,8 @@ public class KubernetesClient {
     };
     private static final TypeToken<Watch.Response<V1Service>> SERVICE_TYPE_TOKEN = new TypeToken<>() {
     };
+    private static final Type POD_TYPE = new TypeToken<Watch.Response<V1Pod>>() {
+    }.getType();
     private static final String BACKGROUND_POLICY = "Background";
     private static final String FOREGROUND_POLICY = "Foreground";
     private static final String NAME_SELECTOR_PREFIX = "metadata.name=";
@@ -291,10 +294,47 @@ public class KubernetesClient {
         }));
     }
 
+    public Mono<V1Pod> createPod(String namespace, V1Pod pod, int timeout) {
+        long startTime = System.currentTimeMillis();
+        return Mono.fromCallable(() -> {
+            String name = pod.getMetadata().getName();
+            CoreV1Api api = new CoreV1Api(apiClient);
+            Call call = api.listNamespacedPod(namespace)
+                    .watch(true)
+                    .fieldSelector(NAME_SELECTOR_PREFIX + name)
+                    .timeoutSeconds(timeout)
+                    .buildCall(null);
+
+            try (Watch<V1Pod> watch = Watch.createWatch(api.getApiClient(), call, POD_TYPE)) {
+                log.info("Creating pod: {}", name);
+                api.createNamespacedPod(namespace, pod).execute();
+
+                for (Watch.Response<V1Pod> item : watch) {
+                    V1Pod state = item.object;
+                    if (state == null) {
+                        logStatus(item.status);
+                        continue;
+                    }
+
+                    Validate.isTrue(name.equals(state.getMetadata().getName()));
+                    if (KubernetesUtils.isPodReady(state)) {
+                        long endTime = System.currentTimeMillis();
+                        log.info("Created pod: {}. Time: {} ms", name, endTime - startTime);
+                        return state;
+                    }
+                }
+            }
+
+            throw new IllegalStateException("Failed to create pod: %s".formatted(name));
+        }).subscribeOn(Schedulers.boundedElastic());
+    }
+
     public Mono<Boolean> deletePod(String namespace, String name) {
+        long startTime = System.currentTimeMillis();
         return handleMissing(Mono.create(sink -> {
             CoreV1Api batchV1Api = new CoreV1Api(apiClient);
-            log.info("Deleting pod {}", name);
+            log.info("Deleting pod: {}", name);
+
             try {
                 batchV1Api.deleteNamespacedPod(name, namespace)
                         .gracePeriodSeconds(0)
@@ -306,7 +346,66 @@ public class KubernetesClient {
 
                             @Override
                             public void onSuccess(V1Pod pod, int i, Map<String, List<String>> map) {
-                                log.info("Pod {} has been deleted", name);
+                                long endTime = System.currentTimeMillis();
+                                log.info("Deleted pod: {}. Time: {} ms", name, endTime - startTime);
+                                sink.success();
+                            }
+                        });
+            } catch (ApiException e) {
+                sink.error(e);
+            }
+        }));
+    }
+
+    public Mono<io.kubernetes.client.openapi.models.V1Service> createService(
+            String namespace, io.kubernetes.client.openapi.models.V1Service svc) {
+        long startTime = System.currentTimeMillis();
+        return Mono.create(sink -> {
+            String name = svc.getMetadata().getName();
+            CoreV1Api api = new CoreV1Api(apiClient);
+            log.info("Creating service: {}", name);
+
+            try {
+                api.createNamespacedService(namespace, svc)
+                        .executeAsync(new NoProgressApiCallback<>() {
+                            @Override
+                            public void onFailure(ApiException error, int status, Map<String, List<String>> headers) {
+                                sink.error(error);
+                            }
+
+                            @Override
+                            public void onSuccess(io.kubernetes.client.openapi.models.V1Service result,
+                                                  int status, Map<String, List<String>> headers) {
+                                long endTime = System.currentTimeMillis();
+                                log.info("Created service: {}. Time: {} ms", name, endTime - startTime);
+                                sink.success(result);
+                            }
+                        });
+            } catch (ApiException e) {
+                sink.error(e);
+            }
+        });
+    }
+
+    public Mono<Boolean> deleteService(String namespace, String name) {
+        long startTime = System.currentTimeMillis();
+        return handleMissing(Mono.create(sink -> {
+            CoreV1Api api = new CoreV1Api(apiClient);
+            log.info("Deleting service: {}", name);
+            try {
+                api.deleteNamespacedService(name, namespace)
+                        .gracePeriodSeconds(0)
+                        .executeAsync(new NoProgressApiCallback<>() {
+                            @Override
+                            public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
+                                sink.error(e);
+                            }
+
+                            @Override
+                            public void onSuccess(io.kubernetes.client.openapi.models.V1Service service, int i,
+                                                  Map<String, List<String>> map) {
+                                long endTime = System.currentTimeMillis();
+                                log.info("Deleted service: {}. Time: {} ms", name, endTime - startTime);
                                 sink.success();
                             }
                         });

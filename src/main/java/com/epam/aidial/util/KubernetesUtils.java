@@ -9,6 +9,7 @@ import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobCondition;
 import io.kubernetes.client.openapi.models.V1JobStatus;
 import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodCondition;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1PodStatus;
 import io.kubernetes.client.util.ClientBuilder;
@@ -95,6 +96,17 @@ public class KubernetesUtils {
         }
 
         return null;
+    }
+
+    public boolean isPodReady(V1Pod pod) {
+        if (pod.getStatus() != null && pod.getStatus().getConditions() != null) {
+            for (V1PodCondition condition : pod.getStatus().getConditions()) {
+                if ("Ready".equals(condition.getType()) && "True".equals(condition.getStatus())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public Pair<String, String> extractFailedContainer(V1PodList podList) {
