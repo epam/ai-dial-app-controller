@@ -6,7 +6,7 @@ on:
 
 jobs:
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@1e108657f4040b8bde2ef4e0730d21c468e6d789
+    uses: epam/ai-dial-ci/.github/workflows/java_pr.yml@1.10.2
     secrets: inherit
     with:
       java_version: 21
