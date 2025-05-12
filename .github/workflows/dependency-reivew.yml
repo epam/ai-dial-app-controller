@@ -1,7 +1,7 @@
 name: Dependency Review
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - synchronize
@@ -12,6 +12,6 @@ concurrency:
 
 jobs:
   dependency-review:
-    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@2cb07ba3be53fb0450c76c16ebdc379b155f8307
+    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@1.10.2
     secrets:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
