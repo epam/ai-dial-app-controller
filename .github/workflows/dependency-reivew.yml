@@ -12,6 +12,6 @@ concurrency:
 
 jobs:
   dependency-review:
-    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@eb0e94ef6041a648615bbb5753d8dde9a8f795c7
+    uses: epam/ai-dial-ci/.github/workflows/java_dependency_review.yml@ebb49e409a674a468f486f7d035c1fdada7bbc72
     secrets:
       ACTIONS_BOT_TOKEN: ${{ secrets.ACTIONS_BOT_TOKEN }}
