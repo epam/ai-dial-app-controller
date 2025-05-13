@@ -21,6 +21,8 @@ java {
 }
 
 checkstyle {
+    // fix CVE-2023-2976
+    toolVersion = "10.23.1"
     configDirectory = file("$rootProject.projectDir/checkstyle")
     configProperties = [
             "org.checkstyle.google.suppressionfilter.config":
@@ -35,14 +37,14 @@ repositories {
 dependencies {
     implementation 'io.kubernetes:client-java:22.0.0'
     implementation 'commons-io:commons-io:2.16.1'
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.3'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.5'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.4.5'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.5'
     testImplementation 'io.projectreactor:reactor-test:3.6.10'
     testImplementation 'org.assertj:assertj-core:3.26.3'
 
