@@ -21,8 +21,8 @@ java {
 }
 
 checkstyle {
-    // fix CVE-2023-2976
-    toolVersion = "10.23.1"
+    // fix CVE-2025-48734
+    toolVersion = "10.26.1"
     configDirectory = file("$rootProject.projectDir/checkstyle")
     configProperties = [
             "org.checkstyle.google.suppressionfilter.config":
