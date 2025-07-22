@@ -21,7 +21,6 @@ java {
 }
 
 checkstyle {
-    // fix CVE-2025-48734
     toolVersion = "10.26.1"
     configDirectory = file("$rootProject.projectDir/checkstyle")
     configProperties = [
@@ -50,6 +49,7 @@ dependencies {
 
     // Security fix:
     implementation 'io.projectreactor.netty:reactor-netty-http:1.2.8' // CVE-2025-22227
+    implementation 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
 }
 
 application {
