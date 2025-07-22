@@ -29,6 +29,11 @@ checkstyle {
     ]
 }
 
+configurations.checkstyle {
+    // Security fix:
+    resolutionStrategy.force 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
+}
+
 repositories {
     mavenCentral()
 }
