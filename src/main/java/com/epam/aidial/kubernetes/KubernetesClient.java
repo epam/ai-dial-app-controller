@@ -357,64 +357,6 @@ public class KubernetesClient {
         }));
     }
 
-    public Mono<io.kubernetes.client.openapi.models.V1Service> createService(
-            String namespace, io.kubernetes.client.openapi.models.V1Service svc) {
-        long startTime = System.currentTimeMillis();
-        return Mono.create(sink -> {
-            String name = svc.getMetadata().getName();
-            CoreV1Api api = new CoreV1Api(apiClient);
-            log.info("Creating service: {}", name);
-
-            try {
-                api.createNamespacedService(namespace, svc)
-                        .executeAsync(new NoProgressApiCallback<>() {
-                            @Override
-                            public void onFailure(ApiException error, int status, Map<String, List<String>> headers) {
-                                sink.error(error);
-                            }
-
-                            @Override
-                            public void onSuccess(io.kubernetes.client.openapi.models.V1Service result,
-                                                  int status, Map<String, List<String>> headers) {
-                                long endTime = System.currentTimeMillis();
-                                log.info("Created service: {}. Time: {} ms", name, endTime - startTime);
-                                sink.success(result);
-                            }
-                        });
-            } catch (ApiException e) {
-                sink.error(e);
-            }
-        });
-    }
-
-    public Mono<Boolean> deleteService(String namespace, String name) {
-        long startTime = System.currentTimeMillis();
-        return handleMissing(Mono.create(sink -> {
-            CoreV1Api api = new CoreV1Api(apiClient);
-            log.info("Deleting service: {}", name);
-            try {
-                api.deleteNamespacedService(name, namespace)
-                        .gracePeriodSeconds(0)
-                        .executeAsync(new NoProgressApiCallback<>() {
-                            @Override
-                            public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
-                                sink.error(e);
-                            }
-
-                            @Override
-                            public void onSuccess(io.kubernetes.client.openapi.models.V1Service service, int i,
-                                                  Map<String, List<String>> map) {
-                                long endTime = System.currentTimeMillis();
-                                log.info("Deleted service: {}. Time: {} ms", name, endTime - startTime);
-                                sink.success();
-                            }
-                        });
-            } catch (ApiException e) {
-                sink.error(e);
-            }
-        }));
-    }
-
     public static void addKnativeServiceToModelMap(String serviceVersion) {
         ServiceVersion version = ServiceVersion.parse(serviceVersion);
         ModelMapper.addModelMap(version.group(), version.version(), "Service", SERVICES, true, V1Service.class);

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -35,7 +36,7 @@ public class SessionController {
             @PathVariable("name") String name,
             @RequestBody CreateSessionRequestDto request) {
         String image = Objects.requireNonNull(request.image(), "missing image");
-        Map<String, String> env = Objects.requireNonNullElse(request.env(), Map.of());
+        Map<String, String> env = Objects.requireNonNullElse(request.env(), new HashMap<>());
         Mono<CreateSessionResponseDto> result = sessionService.create(name, image, env)
                 .doOnError(e -> log.error("Failed to create session: {}. Error: {}", name, e.getMessage()))
                 .map(CreateSessionResponseDto::new);

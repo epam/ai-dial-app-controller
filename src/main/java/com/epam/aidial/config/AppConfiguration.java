@@ -47,9 +47,6 @@ public class AppConfiguration {
 
     @Getter
     @Setter
-    private io.kubernetes.client.openapi.models.V1Service sessionSvc;
-    @Getter
-    @Setter
     private V1Pod sessionPod;
 
     @Getter
@@ -108,11 +105,6 @@ public class AppConfiguration {
 
     public V1Container cloneServiceContainer() {
         return Yaml.loadAs(serviceContainerString, V1Container.class);
-    }
-
-    public io.kubernetes.client.openapi.models.V1Service cloneSessionSvc() {
-        String yaml = Yaml.dump(sessionSvc);
-        return Yaml.loadAs(yaml, io.kubernetes.client.openapi.models.V1Service.class);
     }
 
     public V1Pod cloneSessionPod() {

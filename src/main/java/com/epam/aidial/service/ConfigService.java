@@ -18,7 +18,6 @@ import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1SecretEnvSource;
 import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
-import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -173,19 +172,6 @@ public class ConfigService {
                 .data()
                 .setValue(value));
 
-        return config.data();
-    }
-
-    public io.kubernetes.client.openapi.models.V1Service sessionSvc(String name) {
-        MappingChain<io.kubernetes.client.openapi.models.V1Service> config = new MappingChain<>(appconfig.cloneSessionSvc());
-
-        MappingChain<V1ObjectMeta> metadata = config.get(Mappers.SERVICE_METADATA);
-        metadata.data().setName(name);
-
-        MappingChain<V1ServiceSpec> spec = config.get(Mappers.SERVICE_SPEC);
-        MappingChain<Map<String, String>> selector = spec.get(Mappers.SERVICE_SPEC_SELECTORS);
-
-        selector.data().put("session", name);
         return config.data();
     }
 

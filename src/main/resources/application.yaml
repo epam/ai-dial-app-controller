@@ -144,16 +144,6 @@ app:
   secret-config:
     apiVersion: v1
     kind: Secret
-  session-svc:
-    apiVersion: v1
-    kind: Service
-    spec:
-      type: ClusterIP
-      clusterIP: None
-      ports:
-        - protocol: TCP
-          port: 8080
-          targetPort: 8080
   session-pod:
     apiVersion: v1
     kind: Pod
