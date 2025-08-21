@@ -1,7 +1,6 @@
 package com.epam.aidial.service;
 
 import com.epam.aidial.kubernetes.KubernetesClient;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +24,6 @@ public class SessionService {
     private final int timeout;
 
     public Mono<String> create(String name, String image, Map<String, String> env) {
-        env.putIfAbsent("SESSION_ID", name);
-
         KubernetesClient kubernetesClient = kubernetesService.deployClient();
         String sessionName = sessionName(name);
 
