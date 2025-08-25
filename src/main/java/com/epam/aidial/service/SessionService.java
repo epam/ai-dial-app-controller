@@ -28,7 +28,7 @@ public class SessionService {
         String sessionName = sessionName(name);
 
         V1Pod pod = configService.sessionPod(sessionName, image, env);
-        return kubernetesClient.createPod(namespace, pod, timeout).map(v1Pod -> podUrl(pod));
+        return kubernetesClient.createPod(namespace, pod, timeout).map(this::podUrl);
     }
 
     private String podUrl(V1Pod pod) {
