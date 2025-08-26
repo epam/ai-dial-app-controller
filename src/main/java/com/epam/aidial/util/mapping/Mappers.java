@@ -10,6 +10,7 @@ import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1JobSpec;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodTemplateSpec;
 import io.kubernetes.client.openapi.models.V1Secret;
@@ -18,7 +19,9 @@ import io.kubernetes.client.openapi.models.V1VolumeMount;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @UtilityClass
 public class Mappers {
@@ -131,4 +134,39 @@ public class Mappers {
             ArrayList::new,
             V1Container::getVolumeMounts,
             V1Container::setVolumeMounts);
+
+    public static final FieldMapper<V1Pod, V1ObjectMeta> POD_METADATA = new FieldMapper<>(
+            V1ObjectMeta::new,
+            V1Pod::getMetadata,
+            V1Pod::setMetadata);
+
+    public static final FieldMapper<V1ObjectMeta, Map<String, String>> METADATA_LABELS = new FieldMapper<>(
+            HashMap::new,
+            V1ObjectMeta::getLabels,
+            V1ObjectMeta::setLabels);
+
+    public static final FieldMapper<V1Pod, V1PodSpec> POD_SPEC = new FieldMapper<>(
+            V1PodSpec::new,
+            V1Pod::getSpec,
+            V1Pod::setSpec);
+
+    public static final FieldMapper<V1PodSpec, List<V1Container>> POD_SPEC_CONTAINERS = new FieldMapper<>(
+            ArrayList::new,
+            V1PodSpec::getContainers,
+            V1PodSpec::setContainers);
+
+    public static final FieldMapper<io.kubernetes.client.openapi.models.V1Service, V1ObjectMeta> SERVICE_METADATA = new FieldMapper<>(
+            V1ObjectMeta::new,
+            io.kubernetes.client.openapi.models.V1Service::getMetadata,
+            io.kubernetes.client.openapi.models.V1Service::setMetadata);
+
+    public static final FieldMapper<io.kubernetes.client.openapi.models.V1Service, io.kubernetes.client.openapi.models.V1ServiceSpec> SERVICE_SPEC = new FieldMapper<>(
+            io.kubernetes.client.openapi.models.V1ServiceSpec::new,
+            io.kubernetes.client.openapi.models.V1Service::getSpec,
+            io.kubernetes.client.openapi.models.V1Service::setSpec);
+
+    public static final FieldMapper<io.kubernetes.client.openapi.models.V1ServiceSpec, Map<String, String>> SERVICE_SPEC_SELECTORS = new FieldMapper<>(
+            HashMap::new,
+            io.kubernetes.client.openapi.models.V1ServiceSpec::getSelector,
+            io.kubernetes.client.openapi.models.V1ServiceSpec::setSelector);
 }

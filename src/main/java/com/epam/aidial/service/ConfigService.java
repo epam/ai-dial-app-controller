@@ -6,12 +6,14 @@ import com.epam.aidial.config.DockerAuthScheme;
 import com.epam.aidial.kubernetes.knative.V1RevisionTemplateSpec;
 import com.epam.aidial.kubernetes.knative.V1Service;
 import com.epam.aidial.util.mapping.ListMapper;
+import com.epam.aidial.util.mapping.Mappers;
 import com.epam.aidial.util.mapping.MappingChain;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1EnvFromSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1SecretEnvSource;
@@ -136,6 +138,39 @@ public class ConfigService {
             volumeMount.setName(volumeName);
             volumeMount.setSubPath(DOCKER_CONFIG_KEY);
         }
+
+        return config.data();
+    }
+
+    public V1Pod sessionPod(String name, String image, Map<String, String> env) {
+        MappingChain<V1Pod> config = new MappingChain<>(appconfig.cloneSessionPod());
+
+        MappingChain<V1ObjectMeta> metadata = config.get(Mappers.POD_METADATA);
+        metadata.data().setName(name);
+
+        MappingChain<Map<String, String>> labels = metadata.get(Mappers.METADATA_LABELS);
+        labels.data().put("session", name);
+
+        MappingChain<V1PodSpec> spec = config.get(Mappers.POD_SPEC);
+
+        if (spec.data().getOverhead() != null && spec.data().getOverhead().isEmpty()) {
+            spec.data().setOverhead(null);
+        }
+
+        if (spec.data().getNodeSelector() != null && spec.data().getNodeSelector().isEmpty()) {
+            spec.data().setNodeSelector(null);
+        }
+
+        MappingChain<V1Container> container = spec
+                .getList(Mappers.POD_SPEC_CONTAINERS, CONTAINER_NAME)
+                .getOrDefault(appconfig.getSessionContainer().getName(), appconfig::cloneSessionContainer);
+
+        container.data().setImage(image);
+        ListMapper<V1EnvVar> containerEnv = container.getList(CONTAINER_ENV_FIELD, ENV_VAR_NAME);
+
+        env.forEach((key, value) -> containerEnv.get(key)
+                .data()
+                .setValue(value));
 
         return config.data();
     }

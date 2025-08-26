@@ -17,6 +17,7 @@ app:
   image-label: latest
   image-build-timeout-sec: 300
   service-setup-timeout-sec: 300
+  session-setup-timeout-sec: 60
   heartbeat-period-sec: 30
   max-error-log-lines: 20
   max-error-log-chars: 1000
@@ -57,7 +58,6 @@ app:
         readOnly: true
   service-container:
     name: app-container
-    imagePullPolicy: Always
     resources:
       requests:
         cpu: "500m"
@@ -144,6 +144,29 @@ app:
   secret-config:
     apiVersion: v1
     kind: Secret
+  session-pod:
+    apiVersion: v1
+    kind: Pod
+  session-container:
+    name: session
+    ports:
+      - containerPort: 8080
+        protocol: TCP
+    startupProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 0
+      periodSeconds: 1
+      failureThreshold: 15
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1G"
+        ephemeral-storage: "500M"
+      limits:
+        cpu: "1000m"
+        memory: "1G"
+        ephemeral-storage: "1G"
 
 spring:
   mvc:

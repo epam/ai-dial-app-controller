@@ -19,7 +19,6 @@ spec:
             - name: test-env-name
               value: test-env-value
           image: image-name
-          imagePullPolicy: Always
           name: app-container
           resources:
             requests:

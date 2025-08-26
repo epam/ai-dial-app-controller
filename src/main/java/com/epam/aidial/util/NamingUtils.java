@@ -18,6 +18,10 @@ public class NamingUtils {
         return kubeName("app", name);
     }
 
+    public static String sessionName(String name) {
+        return kubeName("session", name);
+    }
+
     private String kubeName(String type, String name) {
         return "%s-%s-%s".formatted(NAME_PREFIX, type, name);
     }
