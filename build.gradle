@@ -56,6 +56,7 @@ dependencies {
     implementation 'io.projectreactor.netty:reactor-netty-http:1.2.8' // CVE-2025-22227
     implementation 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
     implementation 'io.netty:netty-codec-http2:4.2.4.Final'  // CVE-2025-55163
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.42' // CVE-2025-48989
 }
 
 application {
