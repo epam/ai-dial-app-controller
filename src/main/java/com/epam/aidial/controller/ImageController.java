@@ -9,6 +9,7 @@ import com.epam.aidial.util.SseUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -50,7 +51,7 @@ public class ImageController {
             String name,
             @RequestBody
             CreateImageRequestDto request) {
-        String jwt = StringUtils.startsWithIgnoreCase(authorization, AUTHORIZATION_PREFIX)
+        String jwt = Strings.CI.startsWith(authorization, AUTHORIZATION_PREFIX)
                 ? authorization.substring(AUTHORIZATION_PREFIX.length()).trim()
                 : null;
 
