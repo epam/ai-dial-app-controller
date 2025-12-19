@@ -39,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.kubernetes:client-java:22.0.0'
+    implementation 'io.kubernetes:client-java:25.0.0'
     implementation 'commons-io:commons-io:2.16.1'
     implementation 'org.springframework.boot:spring-boot-starter-web:3.5.5'
     implementation 'org.springframework.boot:spring-boot-starter-webflux:3.5.5'
