@@ -39,6 +39,7 @@ repositories {
 }
 
 dependencies {
+    implementation platform("io.netty:netty-bom:4.2.9.Final")
     implementation 'io.kubernetes:client-java:25.0.0'
     implementation 'commons-io:commons-io:2.16.1'
     implementation 'org.springframework.boot:spring-boot-starter-web:3.5.9'
