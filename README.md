@@ -63,7 +63,7 @@ The application can be configured using environment variables or by modifying th
 | `APP_BUILD_CONTEXT`             |                                                  | No          | The Kubernetes context used for building images, as defined in kubeconfig.        |
 | `APP_DEPLOY_CONTEXT`            |                                                  | No          | The Kubernetes context used for deploying applications, as defined in kubeconfig. |
 | `APP_BUILD_NAMESPACE`           | `default`                                        | No          | The Kubernetes namespace used for building images.                                |
-| `APP_BUILD_NAMESPACE`           | `default`                                        | No          | The Kubernetes namespace used for building images.                                |
+| `APP_DEPLOY_NAMESPACE`          | `default`                                        | No          | The Kubernetes namespace used for deploying applications.                         |
 | `APP_HEARTBEAT_PERIOD_SEC`      | `30`                                             | No          | The interval in seconds for sending heartbeat events.                             |
 | `APP_IMAGE_NAME_FORMAT`         | `app-%s`                                         | No          | Format for naming Docker images.                                                  |
 | `APP_IMAGE_LABEL`               | `latest`                                         | No          | The label used for Docker images.                                                 |
