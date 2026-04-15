@@ -39,7 +39,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform("io.netty:netty-bom:4.2.9.Final")
+    implementation platform("io.netty:netty-bom:4.2.10.Final")
     implementation 'io.kubernetes:client-java:25.0.0'
     implementation 'commons-io:commons-io:2.16.1'
     implementation 'org.springframework.boot:spring-boot-starter-web:3.5.10'
@@ -55,9 +55,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Security fix:
-    implementation 'io.projectreactor.netty:reactor-netty-http:1.2.10' // CVE-2025-22227
     implementation 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
-    implementation 'org.springframework:spring-core:6.2.15' // CVE-2025-41249
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.54'
 }
 
