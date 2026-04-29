@@ -32,6 +32,7 @@ checkstyle {
 configurations.checkstyle {
     // Security fix:
     resolutionStrategy.force 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
+    resolutionStrategy.force 'org.codehaus.plexus:plexus-utils:3.6.1' // CVE-2025-67030
 }
 
 repositories {
@@ -39,13 +40,13 @@ repositories {
 }
 
 dependencies {
-    implementation platform("io.netty:netty-bom:4.2.9.Final")
+    implementation platform("io.netty:netty-bom:4.2.11.Final")
     implementation 'io.kubernetes:client-java:25.0.0'
     implementation 'commons-io:commons-io:2.16.1'
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.5.10'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.5.10'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.5.14'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.5.14'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
 
     testImplementation platform('org.junit:junit-bom:5.12.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -55,10 +56,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Security fix:
-    implementation 'io.projectreactor.netty:reactor-netty-http:1.2.10' // CVE-2025-22227
     implementation 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
-    implementation 'org.springframework:spring-core:6.2.15' // CVE-2025-41249
-    implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.50' // CVE-2025-55752
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.54'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.84' // CVE-2026-5598
 }
 
 application {

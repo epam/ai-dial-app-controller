@@ -18,8 +18,8 @@ RUN mkdir /build && tar -xf /home/gradle/src/build/distributions/ai-dial-app-con
 
 FROM eclipse-temurin:21-jdk-alpine
 
-# fix CVE-2025-0840, CVE-2025-64720
-RUN apk update && apk upgrade --no-cache binutils libpng
+# security updates
+RUN apk update && apk upgrade --no-cache binutils libpng gnutls libcrypto3 libssl3 openssl zlib musl musl-utils
 
 ENV OTEL_TRACES_EXPORTER="none"
 ENV OTEL_METRICS_EXPORTER="none"
