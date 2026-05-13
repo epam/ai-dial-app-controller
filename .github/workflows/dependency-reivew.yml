@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        uses: step-security/harden-runner@a5ad31d6a139d249332a2605b85202e8c0b78450 # v2.19.1
         with:
           disable-telemetry: true
           disable-sudo-and-containers: true
@@ -70,11 +70,11 @@ jobs:
             core.setOutput('base_sha', base_sha);
             core.setOutput('head_sha', head_sha);
       - name: Download and submit dependency graph
-        uses: gradle/actions/dependency-submission@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+        uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
         with:
           dependency-graph: download-and-submit
       - id: dependency-review
-        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 600 # let GitHub process both graphs up to 10 minutes
