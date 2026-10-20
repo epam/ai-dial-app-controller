@@ -31,8 +31,8 @@ checkstyle {
 
 configurations.checkstyle {
     // Security fix:
-    resolutionStrategy.force 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
-    resolutionStrategy.force 'org.codehaus.plexus:plexus-utils:3.6.1' // CVE-2025-67030
+    resolutionStrategy.force 'org.apache.commons:commons-lang3:3.20.0' // CVE-2025-48924
+    resolutionStrategy.force 'org.codehaus.plexus:plexus-utils:3.6.2' // CVE-2025-67030
 }
 
 repositories {
@@ -40,23 +40,23 @@ repositories {
 }
 
 dependencies {
-    implementation platform("io.netty:netty-bom:4.2.11.Final")
-    implementation 'io.kubernetes:client-java:25.0.0'
+    implementation platform("io.netty:netty-bom:4.2.19.Final")
+    implementation 'io.kubernetes:client-java:27.0.1'
     implementation 'commons-io:commons-io:2.16.1'
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.5.14'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.5.14'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.5.16'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:3.5.16'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.7'
 
     testImplementation platform('org.junit:junit-bom:5.12.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.5.10'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.5.16'
     testImplementation 'io.projectreactor:reactor-test:3.6.10'
     testImplementation 'org.assertj:assertj-core:3.27.7'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Security fix:
-    implementation 'org.apache.commons:commons-lang3:3.18.0' // CVE-2025-48924
+    implementation 'org.apache.commons:commons-lang3:3.20.0' // CVE-2025-48924
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.59'
     implementation 'org.bouncycastle:bcprov-jdk18on:1.85' // CVE-2026-5598
 }
