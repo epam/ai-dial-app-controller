@@ -7,10 +7,12 @@ import com.epam.aidial.service.DeployService;
 import com.epam.aidial.service.HeartbeatService;
 import com.epam.aidial.util.SseUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -26,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @WebFluxTest(DeploymentController.class)
 class DeploymentControllerTest {
     private static final String TEST_NAME = "test-name";
@@ -121,4 +124,4 @@ class DeploymentControllerTest {
 
         verify(deployService).undeploy(TEST_NAME);
     }
-}
+}

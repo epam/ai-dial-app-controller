@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
 @TestPropertySource(properties = {
         "app.build-namespace=" + BuildServiceTest.TEST_NAMESPACE,
         "app.docker-registry=" + BuildServiceTest.TEST_REGISTRY,
@@ -218,4 +219,4 @@ class BuildServiceTest {
         assertThat(getDigestCaptor.getValue())
                 .isEqualTo(TEST_NAME);
     }
-}
+}
