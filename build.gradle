@@ -58,7 +58,7 @@ dependencies {
 
     // Security fix:
     implementation 'org.apache.commons:commons-lang3:3.20.0' // CVE-2025-48924
-    implementation 'org.apache.tomcat.embed:tomcat-embed-core:10.1.59' // CVE-2026-65182, CVE-2026-65905, CVE-2026-68525
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.27' // CVE-2026-65182, CVE-2026-65905, CVE-2026-68525
     implementation 'org.bouncycastle:bcprov-jdk18on:1.85' // CVE-2026-5598
     implementation 'com.fasterxml.jackson.core:jackson-core:2.22.4' // CVE-2026-89407, CVE-2026-89425
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.4' // CVE-2026-68497, CVE-2026-91776, CVE-2026-91777
