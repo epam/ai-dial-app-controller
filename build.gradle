@@ -65,6 +65,7 @@ dependencies {
     implementation 'org.apache.httpcomponents.core5:httpcore5-h2:5.4.4' // CVE-2026-54428
     implementation 'tools.jackson.core:jackson-core:3.1.8' // CVE-2026-89407, CVE-2026-89425
     implementation 'tools.jackson.core:jackson-databind:3.1.8' // CVE-2026-68497, CVE-2026-91776, CVE-2026-91777
+    implementation 'com.google.guava:guava:33.7.2-jre' // CVE-2026-102554
 }
 
 application {
